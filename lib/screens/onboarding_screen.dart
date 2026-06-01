@@ -189,94 +189,90 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
           const Spacer(),
-          // 스마트폰 캘린더 피크닉 질문 박스 시뮬레이션 카드
+          // 스마트폰 캘린더 질문 시뮬레이션 카드 (Figma 디자인 반영)
           Center(
             child: Container(
               width: 280,
-              height: 250,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.gray2, width: 1.2),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  )
-                ],
+              height: 263,
+              decoration: const BoxDecoration(
+                color: Color(0xFF3C5A70), // Rectangle 271 색상
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(28),
+                  topRight: Radius.circular(30),
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 프로필 영역
-                  Row(
-                    children: [
-                      Container(
-                        width: 32,
-                        height: 32,
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                width: 246,
+                height: 246,
+                margin: const EdgeInsets.only(left: 17, right: 17, top: 17),
+                decoration: const BoxDecoration(
+                  color: Colors.white, // Rectangle 272 색상
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(19),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: 70, // y: 375 - 305 = 70
+                      left: 8,  // x: 65 - 57 = 8
+                      child: Container(
+                        width: 230,
+                        height: 56,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
-                          color: AppColors.subColor,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.gray2),
+                          color: const Color(0xFFF4FAFF), // Rectangle 273 색상 (subColor)
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        child: ClipOval(
-                          child: Image.asset(
-                            'assets/images/character.png',
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '마중이',
-                        style: AppTextStyle.caption1Bold.copyWith(color: AppColors.grayScale9),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  // 피그마 질문 렌더링
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: const BoxDecoration(
-                      color: AppColors.subColor,
-                      borderRadius: BorderRadius.only(
-                        topRight: Radius.circular(16),
-                        bottomLeft: Radius.circular(16),
-                        bottomRight: Radius.circular(16),
-                      ),
-                    ),
-                    child: Text(
-                      '오늘 피크닉 잘 다녀왔어?\n거기서 맛있는 것도 많이 먹었니? 🧺',
-                      style: AppTextStyle.caption1.copyWith(
-                        color: AppColors.grayScale9,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: const BoxDecoration(
-                        color: AppColors.mainColor,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(16),
-                          bottomLeft: Radius.circular(16),
-                          bottomRight: Radius.circular(16),
-                        ),
-                      ),
-                      child: Text(
-                        '응! 날씨도 좋아서 정말 힐링됐어.',
-                        style: AppTextStyle.caption1.copyWith(
-                          color: AppColors.white,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Ellipse 2 (Avatar circle)
+                            Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF6F8FA), // gray1
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: AppColors.mainColor,
+                                  width: 1.0,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Texts
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  '00이',
+                                  style: AppTextStyle.caption2.copyWith(
+                                    color: AppColors.grayScale9,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '오늘 피크닉 잘 다녀왔어?',
+                                  style: AppTextStyle.caption1.copyWith(
+                                    color: AppColors.grayScale9,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -452,24 +448,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Stack(
             alignment: Alignment.bottomCenter,
             children: [
-              Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-                decoration: BoxDecoration(
-                  color: AppColors.subColor,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.mainColor.withValues(alpha: 0.2)),
-                ),
-                child: Text(
-                  bubbleText,
-                  textAlign: TextAlign.center,
-                  style: AppTextStyle.body2R.copyWith(
-                    color: AppColors.grayScale9,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-              // 말풍선 삼각형 꼬리 (Union Beak)
+              // 말풍선 삼각형 꼬리 (Union Beak)가 뒤에 깔리도록 먼저 선언
               Positioned(
                 bottom: 4,
                 child: RotationTransition(
@@ -477,13 +456,39 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: Container(
                     width: 16,
                     height: 16,
-                    decoration: BoxDecoration(
-                      color: AppColors.subColor,
-                      border: Border(
-                        bottom: BorderSide(color: AppColors.mainColor.withValues(alpha: 0.2)),
-                        right: BorderSide(color: AppColors.mainColor.withValues(alpha: 0.2)),
-                      ),
+                    decoration: const BoxDecoration(
+                      color: AppColors.grayScale1,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 8,
+                          offset: Offset(2, 2),
+                        ),
+                      ],
                     ),
+                  ),
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                decoration: BoxDecoration(
+                  color: AppColors.grayScale1,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  bubbleText,
+                  textAlign: TextAlign.center,
+                  style: AppTextStyle.body2R.copyWith(
+                    color: AppColors.grayScale9,
+                    height: 1.5,
                   ),
                 ),
               ),
