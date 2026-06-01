@@ -17,6 +17,7 @@ import 'widgets/like_filter_button.dart';
 import 'widgets/style_segmented_slider.dart';
 import 'widgets/mini_segmented_slider.dart';
 import 'widgets/send_icon_button.dart';
+import 'screens/onboarding_screen.dart';
 
 // --- Riverpod Providers (로직 분리 상태 관리) ---
 
@@ -171,6 +172,17 @@ class MainHomeScreen extends ConsumerWidget {
                   Text(
                     '피그마 color 섹션의 16색 팔레트와 11종의 모든 공통 컴포넌트 이식이 완료되었습니다.',
                     style: AppTextStyle.caption1.copyWith(color: AppColors.grayScale9),
+                  ),
+                  const SizedBox(height: 12),
+                  CustomButton(
+                    label: '✨ 1단계: 온보딩 플로우(UI 껍데기) 테스트',
+                    isFullWidth: true,
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+                      );
+                    },
                   ),
                 ],
               ),
