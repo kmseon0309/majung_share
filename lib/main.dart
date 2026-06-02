@@ -18,6 +18,7 @@ import 'widgets/style_segmented_slider.dart';
 import 'widgets/mini_segmented_slider.dart';
 import 'widgets/send_icon_button.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/home_screen.dart';
 
 // --- Riverpod Providers (로직 분리 상태 관리) ---
 
@@ -181,6 +182,17 @@ class MainHomeScreen extends ConsumerWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  CustomButton(
+                    label: '🏠 2단계: 홈 화면(UI 껍데기) 테스트',
+                    isFullWidth: true,
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const HomeScreen()),
                       );
                     },
                   ),

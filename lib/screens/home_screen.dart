@@ -1,0 +1,249 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:convex_bottom_bar/convex_bottom_bar.dart';
+import '../theme.dart';
+import '../widgets/app_icons.dart';
+import 'chat_screen.dart';
+import 'onboarding/widgets/onboarding_bubble.dart';
+import 'onboarding/widgets/onboarding_illustration.dart';
+
+/// 피그마 HOME 화면(노드 ID 100:1398)의 레이아웃을 100% 반영한 홈 스크린 컴포넌트.
+/// 활동이 존재할 때와 존재하지 않을 때의 두 가지 비주얼 상태 분기를 분격적으로 대응하며,
+/// 원활한 테스트와 시안 비교를 지원하기 위한 상태 변경 스위치 액션을 탑재함.
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  // 사용자의 활동 내역 누적 유무 상태 제어 (true: 활동이 있을 때, false: 활동이 없을 때)
+  final bool _hasActivity = true;
+
+  void _showNavigationPlaceholder(String pageName) {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '$pageName 페이지로 이동합니다 (추후 연결 예정)',
+          style: AppTextStyle.caption1.copyWith(color: AppColors.white),
+        ),
+        backgroundColor: AppColors.mainColor,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _navigateToChat() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ChatScreen()),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.white,
+      appBar: AppBar(
+        backgroundColor: AppColors.white,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        // 피그마 상단 탑바 레이아웃 (x: 16, y: 10, width: 76, height: 36)
+        leadingWidth: 92,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16, top: 10, bottom: 10),
+          child: Container(
+            width: 76,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppColors.gray2,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              '마중',
+              style: AppTextStyle.caption2.copyWith(
+                color: AppColors.grayScale9,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: SvgPicture.asset(
+              AppIcons.bell,
+              width: 24,
+              height: 24,
+              colorFilter: const ColorFilter.mode(
+                AppColors.mainColor,
+                BlendMode.srcIn,
+              ),
+            ),
+            onPressed: () => _showNavigationPlaceholder('알림'),
+          ),
+          IconButton(
+            icon: SvgPicture.asset(
+              AppIcons.setting,
+              width: 24,
+              height: 24,
+              colorFilter: const ColorFilter.mode(
+                AppColors.mainColor,
+                BlendMode.srcIn,
+              ),
+            ),
+            onPressed: () => _showNavigationPlaceholder('설정'),
+          ),
+          const SizedBox(width: 16),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.only(
+          left: 16,
+          right: 16,
+          bottom: 24, // 여유롭게 바텀 바 위에 안착되도록 여백 설정
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(height: 24),
+            // 활동 상태 카드
+            GestureDetector(
+              onTap: () => _showNavigationPlaceholder('행동 추천 및 활동 모음'),
+              child: Container(
+                width: double.infinity,
+                height: 74,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.subColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _hasActivity ? '좋아하는 노래 들으며 산책하기' : '활동 모음 보러가기',
+                      style: AppTextStyle.body2R.copyWith(
+                        color: AppColors.grayScale9,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: AppColors.mainColor,
+                      size: 24,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 60),
+            // 캐릭터 말풍선
+            // TODO: 실제 서비스 시에는 여러 추천 멘트 중 랜덤으로 선택하여 출력하도록 로직 연계 예정 (현재는 피그마 대표 시안 멘트로 모크 고정)
+            const OnboardingBubble(
+              text: '오늘 퇴근길엔 한 정거장 먼저 내려서\n걸어보는 거 어때?\n기분이 조금 가벼워질지도 몰라.',
+            ),
+            const SizedBox(height: 28),
+            // 마중이 캐릭터 (Figma 160x240, scale: 1.0)
+            const Center(child: OnboardingIllustration(scale: 1.0)),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+      bottomNavigationBar: ConvexAppBar.builder(
+        count: 3,
+        itemBuilder: _HomeTabBuilder(
+          onCalendarTap: () => _showNavigationPlaceholder('캘린더'),
+          onMessageTap: _navigateToChat,
+          onEnvelopeTap: () => _showNavigationPlaceholder('우편함'),
+        ),
+        initialActiveIndex: 1,
+        backgroundColor: AppColors.white,
+        elevation: 6,
+        shadowColor: Colors.black.withValues(alpha: 0.15),
+        height: 60,
+        curveSize: 87,
+        top: -27,
+        onTapNotify: (index) {
+          if (index == 0) {
+            _showNavigationPlaceholder('캘린더');
+          } else if (index == 1) {
+            _navigateToChat();
+          } else if (index == 2) {
+            _showNavigationPlaceholder('우편함');
+          }
+          return false; // 항상 false를 반환하여 선택 및 커브가 움직이지 않게 고정
+        },
+      ),
+    );
+  }
+}
+
+/// ConvexAppBar.builder를 위해 탭 아이템들의 위젯을 제공하는 빌더 클래스
+class _HomeTabBuilder extends DelegateBuilder {
+  final VoidCallback onCalendarTap;
+  final VoidCallback onMessageTap;
+  final VoidCallback onEnvelopeTap;
+
+  _HomeTabBuilder({
+    required this.onCalendarTap,
+    required this.onMessageTap,
+    required this.onEnvelopeTap,
+  });
+
+  @override
+  Widget build(BuildContext context, int index, bool active) {
+    if (index == 0) {
+      return Center(
+        child: SvgPicture.asset(
+          AppIcons.calender,
+          width: 32,
+          height: 32,
+          colorFilter: const ColorFilter.mode(
+            AppColors.mainColor,
+            BlendMode.srcIn,
+          ),
+        ),
+      );
+    } else if (index == 1) {
+      return Center(
+        child: Container(
+          width: 69,
+          height: 69,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.mainColor,
+          ),
+          child: Center(
+            child: SvgPicture.asset(
+              AppIcons.message,
+              width: 36,
+              height: 36,
+              colorFilter: const ColorFilter.mode(
+                AppColors.white,
+                BlendMode.srcIn,
+              ),
+            ),
+          ),
+        ),
+      );
+    } else {
+      return Center(
+        child: SvgPicture.asset(
+          AppIcons.envelope,
+          width: 28,
+          height: 28,
+          colorFilter: const ColorFilter.mode(
+            AppColors.mainColor,
+            BlendMode.srcIn,
+          ),
+        ),
+      );
+    }
+  }
+}

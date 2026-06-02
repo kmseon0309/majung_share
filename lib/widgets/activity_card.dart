@@ -74,7 +74,10 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
           ),
           alignment: Alignment.center,
           child: Text(
-            widget.label,
+            widget.label.replaceAllMapped(
+              RegExp(r'(\S)(?=\S)'),
+              (match) => '${match[1]}\u200D',
+            ),
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,

@@ -9,6 +9,7 @@ class CustomButton extends StatefulWidget {
   final bool isFullWidth;
   final Color backgroundColor;
   final double? height;
+  final Color textColor;
 
   const CustomButton({
     super.key,
@@ -17,13 +18,15 @@ class CustomButton extends StatefulWidget {
     this.isFullWidth = false,
     this.backgroundColor = AppColors.mainColor,
     this.height,
+    this.textColor = AppColors.white,
   });
 
   @override
   State<CustomButton> createState() => _CustomButtonState();
 }
 
-class _CustomButtonState extends State<CustomButton> with SingleTickerProviderStateMixin {
+class _CustomButtonState extends State<CustomButton>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
@@ -34,9 +37,10 @@ class _CustomButtonState extends State<CustomButton> with SingleTickerProviderSt
       vsync: this,
       duration: const Duration(milliseconds: 100),
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.96,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -68,7 +72,9 @@ class _CustomButtonState extends State<CustomButton> with SingleTickerProviderSt
       padding: const EdgeInsets.symmetric(horizontal: 28),
       decoration: BoxDecoration(
         color: widget.backgroundColor,
-        borderRadius: BorderRadius.circular(1000), // 피그마의 rounded-[1000px] (알약 형태)
+        borderRadius: BorderRadius.circular(
+          1000,
+        ), // 피그마의 rounded-[1000px] (알약 형태)
         boxShadow: widget.backgroundColor == AppColors.mainColor
             ? [
                 BoxShadow(
@@ -83,21 +89,16 @@ class _CustomButtonState extends State<CustomButton> with SingleTickerProviderSt
       child: Text(
         widget.label,
         style: AppTextStyle.body2B.copyWith(
-          color: AppColors.white,
+          color: widget.textColor,
           letterSpacing: 0.64, // 피그마 tracking-[0.64px] 반영
         ),
       ),
     );
 
     if (widget.isFullWidth) {
-      buttonChild = SizedBox(
-        width: double.infinity,
-        child: buttonChild,
-      );
+      buttonChild = SizedBox(width: double.infinity, child: buttonChild);
     } else {
-      buttonChild = IntrinsicWidth(
-        child: buttonChild,
-      );
+      buttonChild = IntrinsicWidth(child: buttonChild);
     }
 
     return GestureDetector(
@@ -105,10 +106,7 @@ class _CustomButtonState extends State<CustomButton> with SingleTickerProviderSt
       onTapUp: _handleTapUp,
       onTapCancel: _handleTapCancel,
       behavior: HitTestBehavior.opaque,
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: buttonChild,
-      ),
+      child: ScaleTransition(scale: _scaleAnimation, child: buttonChild),
     );
   }
 }

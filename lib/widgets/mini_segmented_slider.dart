@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import '../theme.dart';
 
 /// 피그마의 `미니 슬라이더` 디자인을 반영한 가로 128px, 세로 24px 크기의 미니 세그먼트 슬라이더.
-/// "대화" / "쓰기" 전환 시 메인 블루 색상의 슬라이더 카드가 좌우로 오가는 고품질 애니메이션이 포함되어 있습니다.
+/// 외부에서 주입받은 `labels`를 렌더링하며 전환 시 메인 블루 색상의 슬라이더 카드가 좌우로 오가는 고품질 애니메이션이 포함되어 있습니다.
 class MiniSegmentedSlider extends StatelessWidget {
-  final int selectedIndex; // 0: 대화, 1: 쓰기
+  final int selectedIndex; // 활성 탭 인덱스
   final ValueChanged<int> onChanged;
+  final List<String> labels; // 표시할 탭 레이블 리스트
 
   const MiniSegmentedSlider({
     super.key,
     required this.selectedIndex,
     required this.onChanged,
+    this.labels = const ['대화', '쓰기'], // 기존 호환성을 위한 기본값 지정
   });
 
   @override
@@ -45,46 +47,49 @@ class MiniSegmentedSlider extends StatelessWidget {
           ),
 
           // 텍스트 정렬 및 터치 감지
-          Row(
-            children: [
-              // 1. 대화 탭
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => onChanged(0),
-                  behavior: HitTestBehavior.opaque,
-                  child: Center(
-                    child: AnimatedDefaultTextStyle(
-                      duration: const Duration(milliseconds: 150),
-                      style: AppTextStyle.caption1.copyWith(
-                        fontSize: 14,
-                        color: selectedIndex == 0 ? AppColors.white : AppColors.gray4,
-                        fontWeight: selectedIndex == 0 ? FontWeight.w600 : FontWeight.w400,
+          Positioned.fill(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 1. 첫 번째 탭
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => onChanged(0),
+                    behavior: HitTestBehavior.opaque,
+                    child: Center(
+                      child: AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 150),
+                        style: AppTextStyle.caption1.copyWith(
+                          fontSize: 14,
+                          color: selectedIndex == 0 ? AppColors.white : AppColors.gray4,
+                          fontWeight: selectedIndex == 0 ? FontWeight.w600 : FontWeight.w400,
+                        ),
+                        child: Text(labels.isNotEmpty ? labels[0] : ''),
                       ),
-                      child: const Text('대화'),
                     ),
                   ),
                 ),
-              ),
 
-              // 2. 쓰기 탭
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => onChanged(1),
-                  behavior: HitTestBehavior.opaque,
-                  child: Center(
-                    child: AnimatedDefaultTextStyle(
-                      duration: const Duration(milliseconds: 150),
-                      style: AppTextStyle.caption1.copyWith(
-                        fontSize: 14,
-                        color: selectedIndex == 1 ? AppColors.white : AppColors.gray4,
-                        fontWeight: selectedIndex == 1 ? FontWeight.w600 : FontWeight.w400,
+                // 2. 두 번째 탭
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => onChanged(1),
+                    behavior: HitTestBehavior.opaque,
+                    child: Center(
+                      child: AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 150),
+                        style: AppTextStyle.caption1.copyWith(
+                          fontSize: 14,
+                          color: selectedIndex == 1 ? AppColors.white : AppColors.gray4,
+                          fontWeight: selectedIndex == 1 ? FontWeight.w600 : FontWeight.w400,
+                        ),
+                        child: Text(labels.length > 1 ? labels[1] : ''),
                       ),
-                      child: const Text('쓰기'),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

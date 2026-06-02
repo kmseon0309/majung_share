@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../theme.dart';
 
@@ -7,12 +8,14 @@ class ChatBubble extends StatelessWidget {
   final String text;
   final bool isUser;
   final double maxWidth;
+  final String? imagePath;
 
   const ChatBubble({
     super.key,
     required this.text,
     required this.isUser,
     this.maxWidth = 230.0, // 피그마 max-w-[230px] 반영 기본값
+    this.imagePath,
   });
 
   @override
@@ -43,11 +46,30 @@ class ChatBubble extends StatelessWidget {
         color: backgroundColor,
         borderRadius: borderRadius,
       ),
-      child: Text(
-        text,
-        style: AppTextStyle.body2R.copyWith(
-          color: AppColors.grayScale9,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 로컬 이미지 표시
+          if (imagePath != null) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.file(
+                File(imagePath!),
+                fit: BoxFit.cover,
+              ),
+            ),
+            if (text.isNotEmpty) const SizedBox(height: 8),
+          ],
+          // 텍스트 표시
+          if (text.isNotEmpty)
+            Text(
+              text,
+              style: AppTextStyle.body2R.copyWith(
+                color: AppColors.grayScale9,
+              ),
+            ),
+        ],
       ),
     );
   }

@@ -6,11 +6,13 @@ import '../theme.dart';
 class LikeFilterButton extends StatefulWidget {
   final bool isSelected;
   final VoidCallback onTap;
+  final String label;
 
   const LikeFilterButton({
     super.key,
     required this.isSelected,
     required this.onTap,
+    this.label = '좋아요',
   });
 
   @override
@@ -86,7 +88,7 @@ class _LikeFilterButtonState extends State<LikeFilterButton> with SingleTickerPr
               ),
               const SizedBox(width: 4), // 피그마 gap-[4px] 반영
               Text(
-                '좋아요',
+                widget.label,
                 style: textStyle.copyWith(
                   height: 1.5, // 피그마 leading-[1.5]
                 ),

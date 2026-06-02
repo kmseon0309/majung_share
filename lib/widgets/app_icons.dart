@@ -35,4 +35,13 @@ class AppIcons {
 
   /// 편지 봉투 - 열림 (읽은 편지)
   static const String envelopeOpen = '${_basePath}envelope_open.svg';
+
+  /// 달력 (캘린더 - 피그마 오리지널)
+  static const String calender = '${_basePath}calender.svg';
+
+  /// 말풍선 메시지 (대화 FAB - 피그마 오리지널)
+  static const String message = '${_basePath}message.svg';
+
+  /// 대화 상대 프로필 (SVG)
+  static const String profile = '${_basePath}profile.svg';
 }
