@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme.dart';
+import '../../../theme.dart';
 
 /// 피그마의 `전송 아이콘` 디자인을 반영한 원형 전송 버튼 위젯.
 /// 텍스트 입력창 상태(`isActive`)에 따라 배경색이 메인 블루 또는 회색(`gray3`)으로 부드럽게 애니메이션되며 활성/비활성 처리됩니다.

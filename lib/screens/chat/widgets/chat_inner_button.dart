@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme.dart';
+import '../../../theme.dart';
 
 /// 피그마의 `채팅 내 버튼` 디자인을 반영한 아웃라인 알약 버튼.
 /// 터치 시 미세 스케일 수축 마이크로 애니메이션이 탑재되어 있습니다.

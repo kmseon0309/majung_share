@@ -36,16 +36,16 @@ class ConfirmDialog extends StatelessWidget {
       backgroundColor: backgroundColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Container(
-        padding: const EdgeInsets.all(24),
-        height: 157,
+        padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               title,
               textAlign: TextAlign.center,
               style: AppTextStyle.body2R.copyWith(height: 1.4),
             ),
+            const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [

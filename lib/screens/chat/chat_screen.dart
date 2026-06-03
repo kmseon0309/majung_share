@@ -2,38 +2,51 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
-import '../theme.dart';
-import '../widgets/app_icons.dart';
-import '../widgets/chat_bubble.dart';
-import '../widgets/mini_segmented_slider.dart';
-import '../models/chat_message.dart';
-import 'chat/widgets/typing_indicator.dart';
-import 'chat/widgets/recommendation_bubble.dart';
-import 'chat/widgets/activity_recommendation_dialog.dart';
-import '../widgets/confirm_dialog.dart';
-import 'chat/widgets/image_source_sheet.dart';
-import 'chat/widgets/image_preview_bar.dart';
-import 'chat/widgets/chat_input_bar.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../theme.dart';
+import '../../widgets/app_icons.dart';
+import 'widgets/chat_bubble.dart';
+import '../../widgets/mini_segmented_slider.dart';
+import '../../models/chat_message.dart';
+import 'widgets/typing_indicator.dart';
+import 'widgets/recommendation_bubble.dart';
+import 'widgets/activity_recommendation_dialog.dart';
+import '../../widgets/confirm_dialog.dart';
+import 'widgets/image_source_sheet.dart';
+import 'widgets/image_preview_bar.dart';
+import 'widgets/chat_input_bar.dart';
+import 'diary_loading_screen.dart';
+import 'widgets/direct_write_view.dart';
+import '../../main.dart'; // selectedStyleProvider
+import '../../utils/speech_dictionary.dart';
+
 
 /// 마중이 앱의 핵심 기능인 AI 대화 화면.
 /// 모듈화된 위젯과 대화 상태 기계, 이미지 첨부 및 미리보기 대기 업로드 기능을 탑재하고 있습니다.
-class ChatScreen extends StatefulWidget {
+class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends ConsumerState<ChatScreen> {
   final List<ChatMessage> _messages = [];
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final ImagePicker _picker = ImagePicker();
 
+  // 직접 작성용 상태 및 컨트롤러
+  final TextEditingController _directWriteTitleController = TextEditingController();
+  final TextEditingController _directWriteContentController = TextEditingController();
+  int _directWriteMood = 3;
+  final List<String> _directWriteImagePaths = [];
+
   int _toggleIndex = 0; // 0: 대화, 1: 쓰기
   bool _isInputActive = false;
   bool _isMascotTyping = false;
   String? _selectedImagePath; // 미리보기용 이미지 대기 상태
+  String? _selectedActivity; // 사용자 추천 선택 활동
 
   // 모크 응답 순서 제어용 시퀀스 인덱스
   int _mockSequenceIndex = 0;
@@ -59,6 +72,8 @@ class _ChatScreenState extends State<ChatScreen> {
     _inputController.removeListener(_onInputChange);
     _inputController.dispose();
     _scrollController.dispose();
+    _directWriteTitleController.dispose();
+    _directWriteContentController.dispose();
     super.dispose();
   }
 
@@ -269,6 +284,7 @@ class _ChatScreenState extends State<ChatScreen> {
   /// 추천 활동을 선택했을 때 피드백 전송
   void _selectActivity(String activityLabel) {
     setState(() {
+      _selectedActivity = activityLabel;
       // 사용자의 답변으로 활동 추가
       _messages.add(
         ChatMessage(
@@ -333,13 +349,13 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  /// 대화 끝내기 처리
   void _showFinishDialog() {
+    final isHonorific = ref.read(selectedStyleProvider) == 1;
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return ConfirmDialog(
-          title: '대화를 끝마치고\n일기를 자동 생성할까요?',
+          title: SpeechDictionary.get(SpeechKey.finishConfirmTitle, isHonorific),
           onConfirm: _finishConversation,
         );
       },
@@ -347,36 +363,114 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _finishConversation() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '마중이가 일기를 작성하고 있습니다! (일기 작성 완료 씬 추후 연동 예정)',
-          style: AppTextStyle.caption1.copyWith(color: AppColors.white),
+    // 대화 내역 중 업로드된 이미지 경로들 추출하여 최대 5개 전달
+    final imagePaths = _messages
+        .map((m) => m.imagePath)
+        .whereType<String>()
+        .take(5)
+        .toList();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DiaryLoadingScreen(
+          imagePaths: imagePaths,
+          selectedActivity: _selectedActivity,
         ),
-        backgroundColor: AppColors.mainColor,
-        duration: const Duration(seconds: 3),
       ),
     );
-    Navigator.pop(context); // 홈 화면으로 복귀
   }
 
-  void _showWritePlaceholder() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '직접 쓰기 모드는 준비 중입니다. 대화 모드로 대화를 이어나가 주세요.',
-          style: AppTextStyle.caption1.copyWith(color: AppColors.white),
-        ),
-        backgroundColor: AppColors.mainColor,
-        duration: const Duration(seconds: 2),
-      ),
+  void _showDirectWriteImagePickerSourceSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return ImageSourceSheet(
+          onSourceSelected: (source) {
+            Navigator.pop(context);
+            _pickDirectWriteImage(source);
+          },
+        );
+      },
     );
-    // 강제로 대화 탭으로 복구
-    setState(() {
-      _toggleIndex = 0;
-    });
   }
 
+  Future<void> _pickDirectWriteImage(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _directWriteImagePaths.add(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '이미지를 가져오는 중 오류가 발생했습니다: $e',
+              style: AppTextStyle.caption1.copyWith(color: AppColors.white),
+            ),
+            backgroundColor: AppColors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _submitDirectWrite() {
+    final title = _directWriteTitleController.text.trim();
+    final content = _directWriteContentController.text.trim();
+
+    if (title.isEmpty || content.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('제목과 내용을 입력해 주세요.'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return ConfirmDialog(
+          title: '일기를 완성할까?',
+          onConfirm: () {
+            Navigator.pop(context); // Close the dialog
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DiaryLoadingScreen(
+                  isDirectWrite: true,
+                  directWriteTitle: title,
+                  directWriteContent: content,
+                  directWriteMood: _directWriteMood,
+                  imagePaths: _directWriteImagePaths,
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _onFinishPressed() {
+    if (_toggleIndex == 0) {
+      _showFinishDialog();
+    } else {
+      _submitDirectWrite();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -392,10 +486,6 @@ class _ChatScreenState extends State<ChatScreen> {
             AppIcons.arrowBack,
             width: 24,
             height: 24,
-            colorFilter: const ColorFilter.mode(
-              AppColors.mainColor,
-              BlendMode.srcIn,
-            ),
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -413,12 +503,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   AppIcons.checkCircle,
                   width: 24,
                   height: 24,
-                  colorFilter: const ColorFilter.mode(
-                    AppColors.mainColor,
-                    BlendMode.srcIn,
-                  ),
                 ),
-                onPressed: _showFinishDialog,
+                onPressed: _onFinishPressed,
               ),
             ),
           ),
@@ -433,113 +519,121 @@ class _ChatScreenState extends State<ChatScreen> {
               child: MiniSegmentedSlider(
                 selectedIndex: _toggleIndex,
                 onChanged: (index) {
-                  if (index == 1) {
-                    _showWritePlaceholder();
-                  } else {
-                    setState(() {
-                      _toggleIndex = index;
-                    });
-                  }
+                  setState(() {
+                    _toggleIndex = index;
+                  });
                 },
               ),
             ),
             const SizedBox(height: 16),
 
-            // 대화 목록 영역
-            Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                itemCount: _messages.length + (_isMascotTyping ? 1 : 0),
-                itemBuilder: (context, index) {
-                  // mascot 타이핑 중인 인디케이터 처리
-                  if (index == _messages.length && _isMascotTyping) {
-                    return const TypingIndicator();
-                  }
+            if (_toggleIndex == 0) ...[
+              // 대화 목록 영역
+              Expanded(
+                child: ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  itemCount: _messages.length + (_isMascotTyping ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    // mascot 타이핑 중인 인디케이터 처리
+                    if (index == _messages.length && _isMascotTyping) {
+                      return const TypingIndicator();
+                    }
 
-                  final msg = _messages[index];
-                  final isMascot = msg.sender == MessageSender.mascot;
+                    final msg = _messages[index];
+                    final isMascot = msg.sender == MessageSender.mascot;
 
-                  if (isMascot) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // 프로필 아바타 (profile.svg)
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.subColor,
+                    if (isMascot) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SvgPicture.asset(
+                              AppIcons.profile,
+                              width: 40,
+                              height: 40,
                             ),
-                            child: ClipOval(
-                              child: SvgPicture.asset(
-                                AppIcons.profile,
-                                width: 40,
-                                height: 40,
-                                fit: BoxFit.cover,
+                            const SizedBox(width: 8),
+                            // 메시지 본문
+                            if (msg.type == MessageType.activityRecommendation)
+                              RecommendationBubble(
+                                content: msg.content,
+                                onRecommendationTap:
+                                    _showActivityRecommendationModal,
+                              )
+                            else
+                              ChatBubble(
+                                text: msg.content,
+                                isUser: false,
+                                imagePath: msg.imagePath,
                               ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          // 메시지 본문
-                          if (msg.type == MessageType.activityRecommendation)
-                            RecommendationBubble(
-                              content: msg.content,
-                              onRecommendationTap:
-                                  _showActivityRecommendationModal,
-                            )
-                          else
-                            ChatBubble(
-                              text: msg.content,
-                              isUser: false,
-                              imagePath: msg.imagePath,
-                            ),
-                        ],
-                      ),
-                    );
-                  } else {
-                    // 사용자 메시지
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: ChatBubble(
-                          text: msg.content,
-                          isUser: true,
-                          imagePath: msg.imagePath,
+                          ],
                         ),
-                      ),
-                    );
-                  }
-                },
+                      );
+                    } else {
+                      // 사용자 메시지
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: ChatBubble(
+                            text: msg.content,
+                            isUser: true,
+                            imagePath: msg.imagePath,
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                ),
               ),
-            ),
 
-            // 이미지 프리뷰 대기 영역
-            if (_selectedImagePath != null)
-              ImagePreviewBar(
-                imagePath: _selectedImagePath!,
-                onCancel: () {
-                  setState(() {
-                    _selectedImagePath = null;
-                    _onInputChange(); // 전송 상태 체크 업데이트
-                  });
-                },
+              // 이미지 프리뷰 대기 영역
+              if (_selectedImagePath != null)
+                ImagePreviewBar(
+                  imagePath: _selectedImagePath!,
+                  onCancel: () {
+                    setState(() {
+                      _selectedImagePath = null;
+                      _onInputChange(); // 전송 상태 체크 업데이트
+                    });
+                  },
+                ),
+
+              // 하단 입력 표시줄
+              ChatInputBar(
+                controller: _inputController,
+                isInputActive: _isInputActive,
+                onSend: _sendMessage,
+                onImagePickerPressed: _showImagePickerSourceSheet,
               ),
-
-            // 하단 입력 표시줄
-            ChatInputBar(
-              controller: _inputController,
-              isInputActive: _isInputActive,
-              onSend: _sendMessage,
-              onImagePickerPressed: _showImagePickerSourceSheet,
-            ),
+            ] else ...[
+              // 직접 작성 영역
+              Expanded(
+                child: DirectWriteView(
+                  titleController: _directWriteTitleController,
+                  contentController: _directWriteContentController,
+                  selectedMood: _directWriteMood,
+                  onMoodChanged: (mood) {
+                    setState(() {
+                      _directWriteMood = mood;
+                    });
+                  },
+                  imagePaths: _directWriteImagePaths,
+                  onAddImageTap: _showDirectWriteImagePickerSourceSheet,
+                  onRemoveImage: (index) {
+                    setState(() {
+                      _directWriteImagePaths.removeAt(index);
+                    });
+                  },
+                  isHonorific: ref.watch(selectedStyleProvider) == 1,
+                ),
+              ),
+            ],
           ],
         ),
       ),

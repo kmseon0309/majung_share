@@ -14,22 +14,10 @@ class TypingIndicator extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 프로필 아바타 (profile.svg)
-          Container(
+          SvgPicture.asset(
+            AppIcons.profile,
             width: 40,
             height: 40,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.subColor,
-            ),
-            child: ClipOval(
-              child: SvgPicture.asset(
-                AppIcons.profile,
-                width: 40,
-                height: 40,
-                fit: BoxFit.cover,
-              ),
-            ),
           ),
           const SizedBox(width: 8),
           // 타이핑 로딩 점 버블

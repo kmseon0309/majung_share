@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme.dart';
 import '../widgets/app_icons.dart';
+import '../main.dart';
+import '../providers/user_provider.dart';
 import 'onboarding/widgets/onboarding_intro_step.dart';
 import 'onboarding/widgets/onboarding_calendar_step.dart';
 import 'onboarding/widgets/onboarding_name_step.dart';
@@ -10,14 +13,14 @@ import 'onboarding/widgets/onboarding_tone_step.dart';
 /// 피그마 고충실도 매칭을 완료한 마중(Majung) 온보딩 시퀀스 컨테이너 스크린.
 /// GEMINI.md 5장의 파일 모듈화 및 위젯 분리 규칙에 의거하여, 각 단계의 뷰를
 /// 독립 스텝 컴포넌트로 완전히 격리하여 다이어트된 코드로 유지보수성을 극대화함.
-class OnboardingScreen extends StatefulWidget {
+class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   late PageController _pageController;
   int _currentPage = 0;
 
@@ -45,7 +48,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      // 모든 온보딩 최종 단계를 정상 완수하면 Navigator pop 처리하여 메인 화면(플레이그라운드)으로 원상 복귀
+      // 모든 온보딩 최종 단계를 정상 완수하면 상태를 동기화하고 Navigator pop 처리
+      ref.read(userNameProvider.notifier).updateName(_nameController.text);
+      ref.read(selectedStyleProvider.notifier).select(_selectedTone);
       Navigator.pop(context);
     }
   }
@@ -77,10 +82,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   AppIcons.arrowBack,
                   width: 24,
                   height: 24,
-                  colorFilter: const ColorFilter.mode(
-                    AppColors.grayScale9,
-                    BlendMode.srcIn,
-                  ),
                 ),
                 onPressed: _prevPage,
               )

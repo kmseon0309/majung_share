@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '../theme.dart';
+import '../../../theme.dart';
 
 /// 피그마의 `채팅 말풍선` 디자인을 반영한 비대칭 말풍선 컴포넌트.
 /// `isUser` 값에 따라 모서리 형태 및 배경색이 자동 결정됩니다.

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../theme.dart';
-import '../../../widgets/send_icon_button.dart';
+import 'send_icon_button.dart';
 
 /// 채팅 메시지 입력 필드, 이미지 첨부 버튼, 전송 버튼을 포함하는 하단 입력바 위젯.
 class ChatInputBar extends StatelessWidget {

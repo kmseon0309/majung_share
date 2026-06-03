@@ -6,6 +6,9 @@ class AppIcons {
   /// 돌아가기 (왼쪽 화살표 <)
   static const String arrowBack = '${_basePath}arrow_back.svg';
 
+  /// 활동 이동 화살표 (오른쪽 화살표 ->)
+  static const String arrowRight = '${_basePath}arrow_right.svg';
+
   /// 알림 (벨)
   static const String bell = '${_basePath}bell.svg';
 
@@ -44,4 +47,11 @@ class AppIcons {
 
   /// 대화 상대 프로필 (SVG)
   static const String profile = '${_basePath}profile.svg';
+
+  /// 기분 아이콘 1 ~ 5 (1: 아주 좋음, 5: 아주 나쁨)
+  static const String mood1 = '${_basePath}mood_1.svg';
+  static const String mood2 = '${_basePath}mood_2.svg';
+  static const String mood3 = '${_basePath}mood_3.svg';
+  static const String mood4 = '${_basePath}mood_4.svg';
+  static const String mood5 = '${_basePath}mood_5.svg';
 }

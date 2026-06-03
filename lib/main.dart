@@ -5,18 +5,18 @@ import 'package:device_preview/device_preview.dart';
 
 import 'theme.dart';
 import 'widgets/custom_button.dart';
-import 'widgets/chat_bubble.dart';
+import 'screens/chat/widgets/chat_bubble.dart';
 import 'widgets/activity_card.dart';
-import 'widgets/selection_card.dart';
+import 'screens/onboarding/widgets/selection_card.dart';
 import 'widgets/behavior_card.dart';
 
 // 신규 추가된 6종 컴포넌트 임포트
-import 'widgets/chat_inner_button.dart';
+import 'screens/chat/widgets/chat_inner_button.dart';
 import 'widgets/custom_toggle.dart';
 import 'widgets/like_filter_button.dart';
 import 'widgets/style_segmented_slider.dart';
 import 'widgets/mini_segmented_slider.dart';
-import 'widgets/send_icon_button.dart';
+import 'screens/chat/widgets/send_icon_button.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/home_screen.dart';
 
@@ -355,12 +355,26 @@ class MainHomeScreen extends ConsumerWidget {
             Text('행동 가이드 카드 (BehaviorCard - 328x76)', style: AppTextStyle.caption1Bold),
             const SizedBox(height: 8),
             Center(
-              child: BehaviorCard(
-                title: '너는 이런 행동들을 하면 기분이 한결 가벼워지는 것 같아. 😊',
-                isLiked: isBehaviorLiked,
-                onLikeToggle: () {
-                  ref.read(behaviorLikedProvider.notifier).toggle();
-                },
+              child: Column(
+                children: [
+                  BehaviorCard(
+                    title: '너는 이런 행동들을 하면 기분이 한결 가벼워지는 것 같아. 😊 (좋아요형)',
+                    isLiked: isBehaviorLiked,
+                    onLikeToggle: () {
+                      ref.read(behaviorLikedProvider.notifier).toggle();
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  BehaviorCard(
+                    title: '오늘 퇴근길엔 한 정거장 먼저 내려서 걸어보는 거 어때? (화살표형)',
+                    isChevronStyle: true,
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('홈 화면 카드와 동일하게 동작합니다.')),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 32),

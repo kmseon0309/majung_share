@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../theme.dart';
-import '../../../widgets/chat_inner_button.dart';
+import 'chat_inner_button.dart';
 
 /// 마중이의 행동 추천형 커스텀 메시지 버블 위젯.
 class RecommendationBubble extends StatelessWidget {

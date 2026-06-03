@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../theme.dart';
 import '../../../widgets/custom_button.dart';
-import '../../../widgets/selection_card.dart';
+import 'selection_card.dart';
 import 'onboarding_illustration.dart';
 
 /// 온보딩 6단계: 말투 선택 단계 위젯.

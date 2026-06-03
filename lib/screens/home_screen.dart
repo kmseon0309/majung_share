@@ -1,25 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme.dart';
 import '../widgets/app_icons.dart';
-import 'chat_screen.dart';
+import '../widgets/behavior_card.dart';
+import '../providers/activity_recommendation_provider.dart';
+import 'chat/chat_screen.dart';
 import 'onboarding/widgets/onboarding_bubble.dart';
 import 'onboarding/widgets/onboarding_illustration.dart';
+import 'activity_collection_screen.dart';
 
 /// 피그마 HOME 화면(노드 ID 100:1398)의 레이아웃을 100% 반영한 홈 스크린 컴포넌트.
 /// 활동이 존재할 때와 존재하지 않을 때의 두 가지 비주얼 상태 분기를 분격적으로 대응하며,
 /// 원활한 테스트와 시안 비교를 지원하기 위한 상태 변경 스위치 액션을 탑재함.
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  // 사용자의 활동 내역 누적 유무 상태 제어 (true: 활동이 있을 때, false: 활동이 없을 때)
-  final bool _hasActivity = true;
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+
 
   void _showNavigationPlaceholder(String pageName) {
     ScaffoldMessenger.of(context).clearSnackBars();
@@ -44,6 +47,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 좋아요가 등록된 첫 번째 활동 확인 (없을 시 '활동 모음 보러가기' 문구 노출)
+    final activities = ref.watch(activityListProvider);
+    final likedActivities = activities.where((a) => a.isLiked).toList();
+    final cardTitle = likedActivities.isNotEmpty
+        ? likedActivities.first.title
+        : '활동 모음 보러가기';
+
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
@@ -77,10 +87,6 @@ class _HomeScreenState extends State<HomeScreen> {
               AppIcons.bell,
               width: 24,
               height: 24,
-              colorFilter: const ColorFilter.mode(
-                AppColors.mainColor,
-                BlendMode.srcIn,
-              ),
             ),
             onPressed: () => _showNavigationPlaceholder('알림'),
           ),
@@ -89,10 +95,6 @@ class _HomeScreenState extends State<HomeScreen> {
               AppIcons.setting,
               width: 24,
               height: 24,
-              colorFilter: const ColorFilter.mode(
-                AppColors.mainColor,
-                BlendMode.srcIn,
-              ),
             ),
             onPressed: () => _showNavigationPlaceholder('설정'),
           ),
@@ -109,38 +111,18 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(height: 24),
-            // 활동 상태 카드
-            GestureDetector(
-              onTap: () => _showNavigationPlaceholder('행동 추천 및 활동 모음'),
-              child: Container(
-                width: double.infinity,
-                height: 74,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 16,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.subColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _hasActivity ? '좋아하는 노래 들으며 산책하기' : '활동 모음 보러가기',
-                      style: AppTextStyle.body2R.copyWith(
-                        color: AppColors.grayScale9,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const Icon(
-                      Icons.arrow_forward_rounded,
-                      color: AppColors.mainColor,
-                      size: 24,
-                    ),
-                  ],
-                ),
-              ),
+            // 활동 상태 카드 (BehaviorCard 공용화 및 상태 연동)
+            BehaviorCard(
+              title: cardTitle,
+              isChevronStyle: true,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ActivityCollectionScreen(),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 60),
             // 캐릭터 말풍선
@@ -204,10 +186,6 @@ class _HomeTabBuilder extends DelegateBuilder {
           AppIcons.calender,
           width: 32,
           height: 32,
-          colorFilter: const ColorFilter.mode(
-            AppColors.mainColor,
-            BlendMode.srcIn,
-          ),
         ),
       );
     } else if (index == 1) {
@@ -224,10 +202,6 @@ class _HomeTabBuilder extends DelegateBuilder {
               AppIcons.message,
               width: 36,
               height: 36,
-              colorFilter: const ColorFilter.mode(
-                AppColors.white,
-                BlendMode.srcIn,
-              ),
             ),
           ),
         ),
@@ -238,10 +212,6 @@ class _HomeTabBuilder extends DelegateBuilder {
           AppIcons.envelope,
           width: 28,
           height: 28,
-          colorFilter: const ColorFilter.mode(
-            AppColors.mainColor,
-            BlendMode.srcIn,
-          ),
         ),
       );
     }
