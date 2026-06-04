@@ -10,6 +10,7 @@ import 'chat/chat_screen.dart';
 import 'onboarding/widgets/onboarding_bubble.dart';
 import 'onboarding/widgets/onboarding_illustration.dart';
 import 'activity_collection_screen.dart';
+import 'report/report_list_screen.dart';
 
 /// 피그마 HOME 화면(노드 ID 100:1398)의 레이아웃을 100% 반영한 홈 스크린 컴포넌트.
 /// 활동이 존재할 때와 존재하지 않을 때의 두 가지 비주얼 상태 분기를 분격적으로 대응하며,
@@ -142,7 +143,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         itemBuilder: _HomeTabBuilder(
           onCalendarTap: () => _showNavigationPlaceholder('캘린더'),
           onMessageTap: _navigateToChat,
-          onEnvelopeTap: () => _showNavigationPlaceholder('우편함'),
+          onEnvelopeTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ReportListScreen()),
+            );
+          },
         ),
         initialActiveIndex: 1,
         backgroundColor: AppColors.white,
@@ -157,7 +163,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           } else if (index == 1) {
             _navigateToChat();
           } else if (index == 2) {
-            _showNavigationPlaceholder('우편함');
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ReportListScreen()),
+            );
           }
           return false; // 항상 false를 반환하여 선택 및 커브가 움직이지 않게 고정
         },

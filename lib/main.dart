@@ -19,6 +19,7 @@ import 'widgets/mini_segmented_slider.dart';
 import 'screens/chat/widgets/send_icon_button.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/report/report_list_screen.dart';
 
 // --- Riverpod Providers (로직 분리 상태 관리) ---
 
@@ -193,6 +194,17 @@ class MainHomeScreen extends ConsumerWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => const HomeScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  CustomButton(
+                    label: '📬 3단계: 편지 보관함(우편함) 테스트',
+                    isFullWidth: true,
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ReportListScreen()),
                       );
                     },
                   ),
