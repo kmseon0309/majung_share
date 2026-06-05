@@ -9,6 +9,7 @@ import 'onboarding/widgets/onboarding_intro_step.dart';
 import 'onboarding/widgets/onboarding_calendar_step.dart';
 import 'onboarding/widgets/onboarding_name_step.dart';
 import 'onboarding/widgets/onboarding_tone_step.dart';
+import 'home_screen.dart';
 
 /// 피그마 고충실도 매칭을 완료한 마중(Majung) 온보딩 시퀀스 컨테이너 스크린.
 /// GEMINI.md 5장의 파일 모듈화 및 위젯 분리 규칙에 의거하여, 각 단계의 뷰를
@@ -48,10 +49,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      // 모든 온보딩 최종 단계를 정상 완수하면 상태를 동기화하고 Navigator pop 처리
+      // 모든 온보딩 최종 단계를 정상 완수하면 상태를 동기화하고 홈 화면으로 전환
       ref.read(userNameProvider.notifier).updateName(_nameController.text);
       ref.read(selectedStyleProvider.notifier).select(_selectedTone);
-      Navigator.pop(context);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
     }
   }
 

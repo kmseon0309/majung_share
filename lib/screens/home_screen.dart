@@ -11,6 +11,10 @@ import 'onboarding/widgets/onboarding_bubble.dart';
 import 'onboarding/widgets/onboarding_illustration.dart';
 import 'activity_collection_screen.dart';
 import 'report/report_list_screen.dart';
+import 'notification_screen.dart';
+import '../widgets/settings_dialog.dart';
+
+import 'calendar/calendar_screen.dart';
 
 /// 피그마 HOME 화면(노드 ID 100:1398)의 레이아웃을 100% 반영한 홈 스크린 컴포넌트.
 /// 활동이 존재할 때와 존재하지 않을 때의 두 가지 비주얼 상태 분기를 분격적으로 대응하며,
@@ -25,24 +29,19 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
 
 
-  void _showNavigationPlaceholder(String pageName) {
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '$pageName 페이지로 이동합니다 (추후 연결 예정)',
-          style: AppTextStyle.caption1.copyWith(color: AppColors.white),
-        ),
-        backgroundColor: AppColors.mainColor,
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
+
 
   void _navigateToChat() {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const ChatScreen()),
+    );
+  }
+
+  void _navigateToCalendar() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const CalendarScreen()),
     );
   }
 
@@ -65,19 +64,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         leadingWidth: 92,
         leading: Padding(
           padding: const EdgeInsets.only(left: 16, top: 10, bottom: 10),
-          child: Container(
-            width: 76,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppColors.gray2,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              '마중',
-              style: AppTextStyle.caption2.copyWith(
-                color: AppColors.grayScale9,
-                fontWeight: FontWeight.bold,
+          child: GestureDetector(
+            onTap: () {
+              // 임시 코드: 개발자 런처(MainHomeScreen)로 되돌아가기
+              Navigator.pop(context);
+            },
+            child: Container(
+              width: 76,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.gray2,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                '마중',
+                style: AppTextStyle.caption2.copyWith(
+                  color: AppColors.grayScale9,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -89,7 +94,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               width: 24,
               height: 24,
             ),
-            onPressed: () => _showNavigationPlaceholder('알림'),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const NotificationScreen()),
+              );
+            },
           ),
           IconButton(
             icon: SvgPicture.asset(
@@ -97,7 +107,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               width: 24,
               height: 24,
             ),
-            onPressed: () => _showNavigationPlaceholder('설정'),
+            onPressed: () {
+              final parentContext = context;
+              showDialog(
+                context: parentContext,
+                builder: (dialogContext) => SettingsDialog(parentContext: parentContext),
+              );
+            },
           ),
           const SizedBox(width: 16),
         ],
@@ -141,7 +157,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       bottomNavigationBar: ConvexAppBar.builder(
         count: 3,
         itemBuilder: _HomeTabBuilder(
-          onCalendarTap: () => _showNavigationPlaceholder('캘린더'),
+          onCalendarTap: _navigateToCalendar,
           onMessageTap: _navigateToChat,
           onEnvelopeTap: () {
             Navigator.push(
@@ -159,7 +175,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         top: -27,
         onTapNotify: (index) {
           if (index == 0) {
-            _showNavigationPlaceholder('캘린더');
+            _navigateToCalendar();
           } else if (index == 1) {
             _navigateToChat();
           } else if (index == 2) {
@@ -171,6 +187,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           return false; // 항상 false를 반환하여 선택 및 커브가 움직이지 않게 고정
         },
       ),
+
     );
   }
 }

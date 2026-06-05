@@ -6,6 +6,9 @@ class AppIcons {
   /// 돌아가기 (왼쪽 화살표 <)
   static const String arrowBack = '${_basePath}arrow_back.svg';
 
+  /// 마크소트 아이콘 (공용 알림 썸네일로 사용)
+  static const String mascotIcon = '${_basePath}icon.svg';
+
   /// 활동 이동 화살표 (오른쪽 화살표 ->)
   static const String arrowRight = '${_basePath}arrow_right.svg';
 

@@ -8,6 +8,7 @@ class DiaryData {
   final String mascotFeedback;
   final String recommendedAction;
   final bool isDirectWrite;
+  final List<String> tags;
 
   DiaryData({
     required this.date,
@@ -18,6 +19,7 @@ class DiaryData {
     required this.mascotFeedback,
     required this.recommendedAction,
     this.isDirectWrite = false,
+    this.tags = const [],
   });
 
   DiaryData copyWith({
@@ -29,6 +31,7 @@ class DiaryData {
     String? mascotFeedback,
     String? recommendedAction,
     bool? isDirectWrite,
+    List<String>? tags,
   }) {
     return DiaryData(
       date: date ?? this.date,
@@ -39,7 +42,9 @@ class DiaryData {
       mascotFeedback: mascotFeedback ?? this.mascotFeedback,
       recommendedAction: recommendedAction ?? this.recommendedAction,
       isDirectWrite: isDirectWrite ?? this.isDirectWrite,
+      tags: tags ?? this.tags,
     );
   }
 }
+
 
