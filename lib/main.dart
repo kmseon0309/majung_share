@@ -149,7 +149,10 @@ class MainHomeScreen extends ConsumerWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const HomeScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const HomeScreen(),
+                      settings: const RouteSettings(name: '/home'),
+                    ),
                   );
                 },
               ),

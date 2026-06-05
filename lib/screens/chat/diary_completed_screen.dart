@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme.dart';
 import '../../widgets/app_icons.dart';
 import '../../widgets/confirm_dialog.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/diary_provider.dart';
 import '../../widgets/error_screen.dart';
@@ -18,28 +19,18 @@ import 'widgets/activity_recommendation_dialog.dart';
 /// 일기 작성이 완료된 후의 렌더링 화면 (순수 뷰어 역할).
 /// 피그마 시안 node 175:862 ("AI 대화(작성 완료)")에 해당하며, 편집은 DiaryEditScreen에서 전담합니다.
 class DiaryCompletedScreen extends ConsumerStatefulWidget {
-  const DiaryCompletedScreen({super.key});
+  final bool fromCalendar;
+
+  const DiaryCompletedScreen({
+    super.key,
+    this.fromCalendar = false,
+  });
 
   @override
   ConsumerState<DiaryCompletedScreen> createState() => _DiaryCompletedScreenState();
 }
 
 class _DiaryCompletedScreenState extends ConsumerState<DiaryCompletedScreen> {
-  String _getMoodIcon(int mood) {
-    switch (mood) {
-      case 1:
-        return AppIcons.mood1;
-      case 2:
-        return AppIcons.mood2;
-      case 3:
-        return AppIcons.mood3;
-      case 4:
-        return AppIcons.mood4;
-      case 5:
-      default:
-        return AppIcons.mood5;
-    }
-  }
 
   /// 사용자가 업로드한 이미지가 있으면 렌더링
   List<Widget> _buildImageItems(List<String> imagePaths) {
@@ -76,9 +67,10 @@ class _DiaryCompletedScreenState extends ConsumerState<DiaryCompletedScreen> {
   /// 일기 삭제 컨펌 다이얼로그 호출
   void _showDeleteConfirmDialog() {
     final isHonorific = ref.read(selectedStyleProvider) == 1;
+    final parentNavigator = Navigator.of(context);
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return ConfirmDialog(
           title: SpeechDictionary.get(SpeechKey.deleteConfirmTitle, isHonorific),
           onConfirm: () {
@@ -92,8 +84,14 @@ class _DiaryCompletedScreenState extends ConsumerState<DiaryCompletedScreen> {
                 backgroundColor: AppColors.mainColor,
               ),
             );
-            // 메인 플레이그라운드/홈 화면으로 완전히 복귀
-            Navigator.popUntil(context, (route) => route.isFirst);
+            // 1. 다이얼로그 닫기
+            Navigator.pop(dialogContext);
+            // 2. 진입 경로에 따라 적절히 이전 화면 또는 홈 화면으로 이동
+            if (widget.fromCalendar) {
+              parentNavigator.pop();
+            } else {
+              parentNavigator.popUntil(ModalRoute.withName('/home'));
+            }
           },
         );
       },
@@ -112,30 +110,24 @@ class _DiaryCompletedScreenState extends ConsumerState<DiaryCompletedScreen> {
         message: '일기 데이터를 찾을 수 없거나 삭제되었습니다.',
         primaryButtonLabel: '홈으로 돌아가기',
         onPrimaryPressed: () {
-          Navigator.popUntil(context, (route) => route.isFirst);
+          Navigator.popUntil(context, ModalRoute.withName('/home'));
         },
       );
     }
 
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: AppBar(
-        backgroundColor: AppColors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: SvgPicture.asset(
-            AppIcons.arrowBack,
-            width: 24,
-            height: 24,
-          ),
-          onPressed: () {
-            // 일기 완수 후 뒤로가기 탭 시에는 대화방으로 가지 않고 홈 화면으로 복귀
-            Navigator.popUntil(context, (route) => route.isFirst);
-          },
-        ),
-        title: Text(diary.date, style: AppTextStyle.body2B),
-        centerTitle: true,
+      appBar: CustomAppBar(
+        title: diary.date,
+        titleStyle: AppTextStyle.body2B,
+        onBackPressed: () {
+          // 일기 완수 후 뒤로가기 탭 시 진입 경로에 따라 복귀 처리
+          if (widget.fromCalendar) {
+            Navigator.pop(context);
+          } else {
+            Navigator.popUntil(context, ModalRoute.withName('/home'));
+          }
+        },
         actions: [
           // 일반 뷰 모드: 수정(펜) 및 삭제(휴지통) 버튼
           IconButton(
@@ -173,7 +165,7 @@ class _DiaryCompletedScreenState extends ConsumerState<DiaryCompletedScreen> {
               // 1. 감정 클라우드 배지 (Pretendard 72x72)
               Center(
                 child: SvgPicture.asset(
-                  _getMoodIcon(diary.mood),
+                  AppIcons.getMoodIcon(diary.mood),
                   width: 72,
                   height: 72,
                 ),

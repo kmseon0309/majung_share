@@ -57,4 +57,21 @@ class AppIcons {
   static const String mood3 = '${_basePath}mood_3.svg';
   static const String mood4 = '${_basePath}mood_4.svg';
   static const String mood5 = '${_basePath}mood_5.svg';
+
+  /// 기분 정수 값(1~5)을 바탕으로 해당 감정 SVG 아이콘 에셋 경로를 반환합니다.
+  static String getMoodIcon(int mood) {
+    switch (mood) {
+      case 1:
+        return mood1;
+      case 2:
+        return mood2;
+      case 3:
+        return mood3;
+      case 4:
+        return mood4;
+      case 5:
+      default:
+        return mood5;
+    }
+  }
 }

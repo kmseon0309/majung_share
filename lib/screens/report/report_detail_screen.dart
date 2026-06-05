@@ -7,6 +7,7 @@ import '../../models/report_model.dart';
 import '../../providers/report_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../main.dart'; // selectedStyleProvider
+import '../../widgets/custom_app_bar.dart';
 
 /// 피그마 주간 리포트(node 27:121) 및 월간 리포트(node 30:403) 상세 정보를
 /// 유연하게 통합 처리하는 고충실도(High-Fidelity) 리포트 상세 화면입니다.
@@ -40,14 +41,7 @@ class ReportDetailScreen extends ConsumerWidget {
     if (report.id.isEmpty) {
       return Scaffold(
         backgroundColor: AppColors.white,
-        appBar: AppBar(
-          backgroundColor: AppColors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: SvgPicture.asset(AppIcons.arrowBack, width: 24, height: 24),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
+        appBar: const CustomAppBar(title: ''),
         body: const Center(
           child: Text('리포트를 찾을 수 없습니다.', style: AppTextStyle.body2B),
         ),
@@ -76,16 +70,9 @@ class ReportDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: AppBar(
-        backgroundColor: AppColors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: SvgPicture.asset(AppIcons.arrowBack, width: 24, height: 24),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(appBarTitle, style: AppTextStyle.body2B),
-        centerTitle: true,
+      appBar: CustomAppBar(
+        title: appBarTitle,
+        titleStyle: AppTextStyle.body2B,
       ),
       body: SafeArea(
         child: SingleChildScrollView(

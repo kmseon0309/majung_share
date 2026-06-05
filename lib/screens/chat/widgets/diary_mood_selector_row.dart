@@ -14,22 +14,6 @@ class DiaryMoodSelectorRow extends StatelessWidget {
     required this.onMoodChanged,
   });
 
-  String _getMoodIcon(int mood) {
-    switch (mood) {
-      case 1:
-        return AppIcons.mood1;
-      case 2:
-        return AppIcons.mood2;
-      case 3:
-        return AppIcons.mood3;
-      case 4:
-        return AppIcons.mood4;
-      case 5:
-      default:
-        return AppIcons.mood5;
-    }
-  }
-
   Widget _buildMoodSelectorItem(int moodIndex) {
     final isSelected = selectedMood == moodIndex;
     return GestureDetector(
@@ -39,7 +23,7 @@ class DiaryMoodSelectorRow extends StatelessWidget {
         child: Opacity(
           opacity: isSelected ? 1.0 : 0.3,
           child: SvgPicture.asset(
-            _getMoodIcon(moodIndex),
+            AppIcons.getMoodIcon(moodIndex),
             width: 56,
             height: 56,
           ),

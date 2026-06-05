@@ -54,7 +54,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       ref.read(selectedStyleProvider.notifier).select(_selectedTone);
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(
+          builder: (context) => const HomeScreen(),
+          settings: const RouteSettings(name: '/home'),
+        ),
       );
     }
   }

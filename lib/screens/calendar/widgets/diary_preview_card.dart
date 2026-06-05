@@ -5,6 +5,7 @@ import '../../../theme.dart';
 import '../../../models/diary_data.dart';
 import '../../../widgets/app_icons.dart';
 import '../../../providers/diary_provider.dart';
+import '../../../utils/datetime_extension.dart';
 import '../../chat/diary_completed_screen.dart';
 
 class DiaryPreviewCard extends ConsumerWidget {
@@ -17,32 +18,9 @@ class DiaryPreviewCard extends ConsumerWidget {
     required this.diary,
   });
 
-  String _getMoodIcon(int mood) {
-    switch (mood) {
-      case 1:
-        return AppIcons.mood1;
-      case 2:
-        return AppIcons.mood2;
-      case 3:
-        return AppIcons.mood3;
-      case 4:
-        return AppIcons.mood4;
-      case 5:
-      default:
-        return AppIcons.mood5;
-    }
-  }
-
-  String _formatDate(DateTime date) {
-    final year = date.year;
-    final month = date.month.toString().padLeft(2, '0');
-    final day = date.day.toString().padLeft(2, '0');
-    return '$year.$month.$day';
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final formattedDate = _formatDate(selectedDate);
+    final formattedDate = selectedDate.toDotString();
 
     return Container(
       color: AppColors.gray1,
@@ -70,7 +48,7 @@ class DiaryPreviewCard extends ConsumerWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const DiaryCompletedScreen(),
+                    builder: (context) => const DiaryCompletedScreen(fromCalendar: true),
                   ),
                 );
               },
@@ -95,7 +73,7 @@ class DiaryPreviewCard extends ConsumerWidget {
                       left: 16,
                       top: 20,
                       child: SvgPicture.asset(
-                        _getMoodIcon(diary!.mood),
+                        AppIcons.getMoodIcon(diary!.mood),
                         width: 60,
                         height: 60,
                       ),

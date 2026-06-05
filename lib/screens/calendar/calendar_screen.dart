@@ -3,6 +3,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme.dart';
 import '../../widgets/app_icons.dart';
+import '../../widgets/custom_app_bar.dart';
+import '../../utils/datetime_extension.dart';
 import '../../providers/diary_list_provider.dart';
 import 'widgets/diary_preview_card.dart';
 import 'widgets/month_year_picker_bottom_sheet.dart';
@@ -27,22 +29,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   String _getMonthYearString(DateTime date) {
     return '${_months[date.month - 1]} ${date.year}';
-  }
-
-  String _getMoodIcon(int mood) {
-    switch (mood) {
-      case 1:
-        return AppIcons.mood1;
-      case 2:
-        return AppIcons.mood2;
-      case 3:
-        return AppIcons.mood3;
-      case 4:
-        return AppIcons.mood4;
-      case 5:
-      default:
-        return AppIcons.mood5;
-    }
   }
 
   late final DateTime _initialMonth;
@@ -86,7 +72,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final selectedDate = ref.watch(selectedCalendarDateProvider);
     final diaries = ref.watch(diaryListProvider);
 
-    final selectedDateStr = '${selectedDate.year}.${selectedDate.month.toString().padLeft(2, '0')}.${selectedDate.day.toString().padLeft(2, '0')}';
+    final selectedDateStr = selectedDate.toDotString();
     final selectedDiaryMatches = diaries.where((d) => d.date == selectedDateStr);
     final selectedDiary = selectedDiaryMatches.isNotEmpty ? selectedDiaryMatches.first : null;
 
@@ -98,28 +84,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: AppBar(
-        backgroundColor: AppColors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        // 돌아가기 버튼 (피그마 x:16, y:16)
-        leading: IconButton(
-          icon: SvgPicture.asset(
-            AppIcons.arrowBack,
-            width: 24,
-            height: 24,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        // 타이틀 "전체 보기" (피그마 y:24)
-        title: Text(
-          '전체 보기',
-          style: AppTextStyle.body2R.copyWith(
-            color: AppColors.black,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-        centerTitle: true,
+      appBar: const CustomAppBar(
+        title: '전체 보기',
       ),
       body: Column(
         children: [
@@ -285,7 +251,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                             itemBuilder: (context, index) {
                               final day = gridDays[index];
                               final isCurrentMonth = day.month == pageMonth.month;
-                              final dateStr = '${day.year}.${day.month.toString().padLeft(2, '0')}.${day.day.toString().padLeft(2, '0')}';
+                              final dateStr = day.toDotString();
                               
                               final diaryMatches = diaries.where((d) => d.date == dateStr);
                               final diary = diaryMatches.isNotEmpty ? diaryMatches.first : null;
@@ -351,7 +317,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         return Opacity(
           opacity: 0.3,
           child: SvgPicture.asset(
-            _getMoodIcon(diary.mood),
+            AppIcons.getMoodIcon(diary.mood),
             width: 38,
             height: 38,
           ),
@@ -370,7 +336,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
     // 2. 당 월 일자이면서 일기 정보가 등록되어 있는 경우
     if (diary != null) {
-      final iconPath = _getMoodIcon(diary.mood);
+      final iconPath = AppIcons.getMoodIcon(diary.mood);
       
       if (isSelected) {
         // 선택 상태: Svg 외곽 밀착형 테두리 적용 (배경에 1.15배 메인 컬러 SVG 아웃라인 중첩)

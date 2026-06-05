@@ -9,6 +9,8 @@ import '../providers/activity_recommendation_provider.dart';
 import '../main.dart'; // selectedStyleProvider
 import '../utils/speech_dictionary.dart';
 
+import '../widgets/custom_app_bar.dart';
+
 /// 피그마 "행동 추천" 시안(node 100:1179)의 레이아웃을 반영한 활동 모음 화면.
 /// 사용자는 추천받은 활동 목록을 보고 좋아요(하트)를 눌러 북마크할 수 있으며, 
 /// 우상단 필터 버튼을 통해 좋아요를 누른 항목들만 모아서 볼 수 있습니다.
@@ -28,23 +30,9 @@ class ActivityCollectionScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: AppBar(
-        backgroundColor: AppColors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: SvgPicture.asset(
-            AppIcons.arrowBack,
-            width: 24,
-            height: 24,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          '활동 모음',
-          style: AppTextStyle.body2B,
-        ),
-        centerTitle: true,
+      appBar: const CustomAppBar(
+        title: '활동 모음',
+        titleStyle: AppTextStyle.body2B,
       ),
       body: SafeArea(
         child: Padding(

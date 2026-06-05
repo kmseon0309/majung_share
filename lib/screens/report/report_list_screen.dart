@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme.dart';
-import '../../widgets/app_icons.dart';
 import '../../widgets/letter_card.dart';
 import '../../widgets/mini_segmented_slider.dart';
 import '../../providers/report_provider.dart';
 import 'report_detail_screen.dart';
+
+import '../../widgets/custom_app_bar.dart';
 
 /// 피그마 "편지 보관함 (리포트 목록)" 화면 (node 16:70) 구현.
 /// 상단 주간 / 월간 전환용 탭을 제공하며, 탭에 해당하는 편지 리스트를 렌더링합니다.
@@ -20,23 +20,9 @@ class ReportListScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: AppBar(
-        backgroundColor: AppColors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: SvgPicture.asset(
-            AppIcons.arrowBack,
-            width: 24,
-            height: 24,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          '편지 보관함',
-          style: AppTextStyle.body2B,
-        ),
-        centerTitle: true,
+      appBar: const CustomAppBar(
+        title: '편지 보관함',
+        titleStyle: AppTextStyle.body2B,
       ),
       body: SafeArea(
         child: Padding(

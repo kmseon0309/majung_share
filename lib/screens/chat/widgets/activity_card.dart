@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme.dart';
+import '../../../theme.dart';
 
 /// 피그마의 `활동카드(in 모달)` 디자인을 반영한 활동 추천용 선택 위젯.
 /// `isSelected` 상태에 따라 테두리 굵기 및 텍스트/배경색이 변합니다.

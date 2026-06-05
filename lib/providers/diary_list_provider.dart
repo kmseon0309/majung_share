@@ -1,27 +1,26 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/diary_data.dart';
+import '../utils/datetime_extension.dart';
 
 /// 캘린더 화면을 채우기 위해 과거에 작성된 여러 일기들의 리스트를 제공하는 Provider.
 class DiaryListNotifier extends Notifier<List<DiaryData>> {
   @override
   List<DiaryData> build() {
     final now = DateTime.now();
-    final year = now.year;
-    final mStr = now.month.toString().padLeft(2, '0');
 
     String getFormattedDate(int day) {
-      return '$year.$mStr.${day.toString().padLeft(2, '0')}';
+      return DateTime(now.year, now.month, day).toDotString();
     }
 
     // 테스트용 인접 달 일기 (전달 말일 및 다음달 초일)
     final prevMonthEnd = DateTime(now.year, now.month, 0);
-    final prevMonthEndStr = '${prevMonthEnd.year}.${prevMonthEnd.month.toString().padLeft(2, '0')}.${prevMonthEnd.day.toString().padLeft(2, '0')}';
+    final prevMonthEndStr = prevMonthEnd.toDotString();
 
     final nextMonthStart = DateTime(now.year, now.month + 1, 1);
-    final nextMonthStartStr = '${nextMonthStart.year}.${nextMonthStart.month.toString().padLeft(2, '0')}.${nextMonthStart.day.toString().padLeft(2, '0')}';
+    final nextMonthStartStr = nextMonthStart.toDotString();
 
     final nextMonthSecond = DateTime(now.year, now.month + 1, 2);
-    final nextMonthSecondStr = '${nextMonthSecond.year}.${nextMonthSecond.month.toString().padLeft(2, '0')}.${nextMonthSecond.day.toString().padLeft(2, '0')}';
+    final nextMonthSecondStr = nextMonthSecond.toDotString();
 
     return [
       DiaryData(

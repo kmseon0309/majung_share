@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../theme.dart';
 import '../../../widgets/custom_button.dart';
-import '../../../widgets/activity_card.dart';
+import 'activity_card.dart';
 
 /// 피그마의 `활동 추천 모달` 다이얼로그 컴포넌트.
 class ActivityRecommendationDialog extends StatefulWidget {
