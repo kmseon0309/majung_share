@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:device_preview/device_preview.dart';
+import 'package:timezone/data/latest.dart' as tz;
 
 import 'theme.dart';
 import 'widgets/custom_button.dart';
@@ -29,6 +30,7 @@ final toggleStateProvider = NotifierProvider<ToggleState, bool>(ToggleState.new)
 
 
 void main() {
+  tz.initializeTimeZones();
   runApp(
     DevicePreview(
       enabled: !kReleaseMode,

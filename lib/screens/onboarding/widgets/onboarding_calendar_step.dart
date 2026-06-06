@@ -1,15 +1,69 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../theme.dart';
 import '../../../widgets/custom_button.dart';
+import '../../../utils/permission_manager.dart';
+import '../../../utils/calendar_service.dart';
+import '../../../main.dart'; // toggleStateProvider
 
 /// 온보딩 4단계: 스마트폰 캘린더 동기화 동의 단계 위젯.
-class OnboardingCalendarStep extends StatelessWidget {
+class OnboardingCalendarStep extends ConsumerStatefulWidget {
   final VoidCallback onNextPressed;
 
   const OnboardingCalendarStep({
     super.key,
     required this.onNextPressed,
   });
+
+  @override
+  ConsumerState<OnboardingCalendarStep> createState() => _OnboardingCalendarStepState();
+}
+
+class _OnboardingCalendarStepState extends ConsumerState<OnboardingCalendarStep> {
+  bool _isLoading = false;
+
+  Future<void> _handleSync() async {
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // 1. 캘린더 권한 요청
+      final calendarGranted = await PermissionManager.requestCalendarPermission();
+      debugPrint('Majung Sync: Calendar Permission Granted = $calendarGranted');
+
+      // 2. 알림 권한 요청 (동의 여부 상관없이 계속 진행)
+      final notificationGranted = await PermissionManager.requestNotificationPermission();
+      debugPrint('Majung Sync: Notification Permission Granted = $notificationGranted');
+
+      // 알림 권한을 허용했다면 홈 화면의 푸시 알람 토글 상태도 자동으로 ON 처리
+      if (notificationGranted) {
+        ref.read(toggleStateProvider.notifier).toggle(true);
+      }
+
+      if (!mounted) return;
+
+      if (calendarGranted) {
+        // 3. 오늘 일정 조회
+        final todayEvents = await CalendarService.getTodayEvents();
+        debugPrint('Majung Sync: Fetched Today\'s Events = $todayEvents');
+      }
+    } catch (e) {
+      debugPrint('Sync Error: $e');
+    }
+
+    // 짧은 로딩 지연 연출 후 다음 단계로 부드럽게 이동
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+      widget.onNextPressed();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -136,9 +190,9 @@ class OnboardingCalendarStep extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           CustomButton(
-            label: '캘린더 연동하기',
+            label: _isLoading ? '연동 진행 중...' : '캘린더 연동하기',
             isFullWidth: true,
-            onPressed: onNextPressed,
+            onPressed: _isLoading ? () {} : _handleSync,
           ),
           const SizedBox(height: 12),
         ],
