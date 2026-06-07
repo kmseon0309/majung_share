@@ -223,19 +223,6 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
                       ref.read(userNameProvider.notifier).updateName('00이');
                       ref.read(selectedStyleProvider.notifier).select(0);
                       ref.read(toggleStateProvider.notifier).toggle(false);
-
-                      ScaffoldMessenger.of(widget.parentContext).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            '탈퇴 처리가 완료되었습니다 (초기화 완료).',
-                            style: AppTextStyle.caption1.copyWith(
-                              color: AppColors.white,
-                            ),
-                          ),
-                          backgroundColor: AppColors.mainColor,
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
                     },
                     onCancel: () {
                       // 취소 시 다시 설정 모달 띄우기

@@ -36,6 +36,58 @@ class ReportLetter {
     this.weeklySummaries,
   });
 
+  factory ReportLetter.fromJson(Map<String, dynamic> json) {
+    Map<bool, String> parseBoolMap(Map<dynamic, dynamic>? map) {
+      if (map == null) return const {};
+      return map.map((key, value) => MapEntry(key.toString() == 'true', value as String));
+    }
+
+    final rawContent = json['content'] as Map<dynamic, dynamic>? ?? {};
+    final rawOneLiner = json['oneLiner'] as Map<dynamic, dynamic>? ?? {};
+    final rawSignature = json['signature'] as Map<dynamic, dynamic>? ?? {};
+    final rawWrapUp = json['wrapUp'] as Map<dynamic, dynamic>?;
+
+    return ReportLetter(
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      dateRange: json['dateRange'] as String? ?? '',
+      isWeekly: json['isWeekly'] as bool? ?? true,
+      isRead: json['isRead'] as bool? ?? false,
+      isNew: json['isNew'] as bool? ?? false,
+      content: parseBoolMap(rawContent),
+      oneLiner: parseBoolMap(rawOneLiner),
+      signature: parseBoolMap(rawSignature),
+      wrapUp: rawWrapUp != null ? parseBoolMap(rawWrapUp) : null,
+      recommendationTitle: json['recommendationTitle'] as String?,
+      recommendations: (json['recommendations'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      weeklySummaries: (json['weeklySummaries'] as List<dynamic>?)
+          ?.map((e) => WeeklySummary.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    Map<String, String> stringifyBoolMap(Map<bool, String> map) {
+      return map.map((key, value) => MapEntry(key.toString(), value));
+    }
+
+    return {
+      'id': id,
+      'title': title,
+      'dateRange': dateRange,
+      'isWeekly': isWeekly,
+      'isRead': isRead,
+      'isNew': isNew,
+      'content': stringifyBoolMap(content),
+      'oneLiner': stringifyBoolMap(oneLiner),
+      'signature': stringifyBoolMap(signature),
+      'wrapUp': wrapUp != null ? stringifyBoolMap(wrapUp!) : null,
+      'recommendationTitle': recommendationTitle,
+      'recommendations': recommendations,
+      'weeklySummaries': weeklySummaries?.map((e) => e.toJson()).toList(),
+    };
+  }
+
   ReportLetter copyWith({
     String? id,
     String? title,
@@ -78,4 +130,18 @@ class WeeklySummary {
     required this.weekTitle,
     required this.description,
   });
+
+  factory WeeklySummary.fromJson(Map<String, dynamic> json) {
+    return WeeklySummary(
+      weekTitle: json['weekTitle'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'weekTitle': weekTitle,
+      'description': description,
+    };
+  }
 }

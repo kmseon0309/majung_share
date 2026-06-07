@@ -27,7 +27,10 @@ class DiaryTitleInputField extends StatelessWidget {
           ),
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: TextStyle(color: AppColors.gray4),
+            hintStyle: AppTextStyle.body1.copyWith(
+              color: AppColors.gray4,
+              fontWeight: FontWeight.w400,
+            ),
             border: InputBorder.none,
             enabledBorder: InputBorder.none,
             focusedBorder: const UnderlineInputBorder(

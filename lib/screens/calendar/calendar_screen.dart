@@ -73,8 +73,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final diaries = ref.watch(diaryListProvider);
 
     final selectedDateStr = selectedDate.toDotString();
-    final selectedDiaryMatches = diaries.where((d) => d.date == selectedDateStr);
-    final selectedDiary = selectedDiaryMatches.isNotEmpty ? selectedDiaryMatches.first : null;
+    final selectedDiaries = diaries.where((d) => d.date.startsWith(selectedDateStr)).toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
 
     final screenWidth = MediaQuery.of(context).size.width;
     final gridWidth = screenWidth - 34; // 17 horizontal padding on both sides
@@ -120,11 +120,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                             children: [
                               Text(
                                 _getMonthYearString(activeMonth),
-                                style: const TextStyle(
-                                  fontFamily: 'Poppins',
+                                style: AppTextStyle.poppinsBody.copyWith(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.black,
                                 ),
                               ),
                               const SizedBox(width: 4),
@@ -194,11 +192,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                           child: Text(
                             day,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: 16,
+                            style: AppTextStyle.poppinsBody.copyWith(
                               fontWeight: FontWeight.w500,
-                              color: AppColors.black,
                             ),
                           ),
                         );
@@ -253,7 +248,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                               final isCurrentMonth = day.month == pageMonth.month;
                               final dateStr = day.toDotString();
                               
-                              final diaryMatches = diaries.where((d) => d.date == dateStr);
+                              final diaryMatches = diaries.where((d) => d.date.startsWith(dateStr)).toList()
+                                ..sort((a, b) => b.date.compareTo(a.date));
                               final diary = diaryMatches.isNotEmpty ? diaryMatches.first : null;
       
                               final isSelected = selectedDate.year == day.year &&
@@ -298,7 +294,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           // 하단 일기 프리뷰 영역 (피그마 y:529)
           DiaryPreviewCard(
             selectedDate: selectedDate,
-            diary: selectedDiary,
+            diaries: selectedDiaries,
           ),
         ],
       ),
@@ -325,11 +321,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       }
       return Text(
         day.day.toString(),
-        style: const TextStyle(
-          fontFamily: 'Poppins',
-          fontSize: 16,
-          fontWeight: FontWeight.w400,
-          color: Color(0xFFE5E5E5), // 피그마 #e5e5e5 명세 엄수
+        style: AppTextStyle.poppinsBody.copyWith(
+          color: const Color(0xFFE5E5E5), // 피그마 #e5e5e5 명세 엄수
         ),
       );
     }
@@ -389,11 +382,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         alignment: Alignment.center,
         child: Text(
           day.day.toString(),
-          style: const TextStyle(
-            fontFamily: 'Poppins',
-            fontSize: 16,
+          style: AppTextStyle.poppinsBody.copyWith(
             fontWeight: FontWeight.w600,
-            color: AppColors.black,
           ),
         ),
       );
@@ -401,12 +391,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       // 일반 숫자 셀
       return Text(
         day.day.toString(),
-        style: const TextStyle(
-          fontFamily: 'Poppins',
-          fontSize: 16,
-          fontWeight: FontWeight.w400,
-          color: AppColors.black,
-        ),
+        style: AppTextStyle.poppinsBody,
       );
     }
   }

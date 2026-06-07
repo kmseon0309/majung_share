@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase & Secrets
+*service-account*.json
+*firebase-admin*.json
+.env
+.env.local

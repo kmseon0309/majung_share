@@ -25,4 +25,34 @@ class ChatMessage {
     this.activityId,
     this.imagePath,
   });
+
+  factory ChatMessage.fromJson(Map<String, dynamic> json) {
+    return ChatMessage(
+      id: json['id'] as String? ?? '',
+      sender: json['sender'] == 'user' ? MessageSender.user : MessageSender.mascot,
+      content: json['content'] as String? ?? '',
+      timestamp: json['timestamp'] != null
+          ? DateTime.parse(json['timestamp'] as String)
+          : DateTime.now(),
+      type: json['type'] == 'activityRecommendation'
+          ? MessageType.activityRecommendation
+          : MessageType.text,
+      activityTitle: json['activityTitle'] as String?,
+      activityId: json['activityId'] as String?,
+      imagePath: json['imagePath'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'sender': sender == MessageSender.user ? 'user' : 'mascot',
+      'content': content,
+      'timestamp': timestamp.toIso8601String(),
+      'type': type == MessageType.activityRecommendation ? 'activityRecommendation' : 'text',
+      'activityTitle': activityTitle,
+      'activityId': activityId,
+      'imagePath': imagePath,
+    };
+  }
 }

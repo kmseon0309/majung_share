@@ -1,46 +1,76 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/activity_model.dart';
+import '../repositories/activity_repository.dart';
+
+final activityRepositoryProvider = Provider((ref) => ActivityRepository());
 
 /// 추천 활동 목록 상태를 관리하는 Riverpod Notifier.
 class ActivityListNotifier extends Notifier<List<RecommendationActivity>> {
+  ActivityRepository get _repo => ref.read(activityRepositoryProvider);
+
   @override
   List<RecommendationActivity> build() {
-    // 피그마 시안 기준 목업 데이터 및 확장 데이터 구성
-    return [
-      RecommendationActivity(
-        id: 'act_1',
-        title: '좋아하는 노래 들으며 산책하기',
-        isLiked: true, // 첫 번째 항목은 기본적으로 좋아함 상태로 모크 (피그마 시안 y=281 카드)
-      ),
-      RecommendationActivity(
-        id: 'act_2',
-        title: '따뜻한 물로 샤워하기',
-        isLiked: false,
-      ),
-      RecommendationActivity(
-        id: 'act_3',
-        title: '따뜻한 차 한 잔 마시기',
-        isLiked: false,
-      ),
-      RecommendationActivity(
-        id: 'act_4',
-        title: '방 정리하고 10분 동안 환기하기',
-        isLiked: false,
-      ),
-      RecommendationActivity(
-        id: 'act_5',
-        title: '포근한 이불 속에서 좋아하는 책 읽기',
-        isLiked: false,
-      ),
-    ];
+    _init();
+    return [];
+  }
+
+  Future<void> _init() async {
+    if (_repo.isEnabled) {
+      final list = await _repo.getActivities();
+      state = list;
+    }
+  }
+
+  /// 새로운 활동을 추천받아 목록에 추가합니다. (중복 방지)
+  Future<void> addActivity(String title) async {
+    // 중복 여부 확인
+    final exists = state.any((act) => act.title == title);
+    if (exists) return;
+
+    final newActivity = RecommendationActivity(
+      id: 'act_${DateTime.now().millisecondsSinceEpoch}',
+      title: title,
+      isLiked: false,
+    );
+
+    final updatedList = [...state, newActivity];
+    updatedList.sort((a, b) => b.id.compareTo(a.id));
+    state = updatedList;
+    
+    if (_repo.isEnabled) {
+      await _repo.updateActivityLike(newActivity); // Firestore에 저장
+    }
+  }
+
+  /// 특정 활동의 타이틀을 받아 목록에서 삭제합니다. (Firestore 동기화 포함)
+  Future<void> removeActivityByTitle(String title) async {
+    final targets = state.where((act) => act.title == title).toList();
+    if (targets.isEmpty) return;
+
+    final targetId = targets.first.id;
+    state = state.where((act) => act.title != title).toList();
+
+    if (_repo.isEnabled) {
+      await _repo.deleteActivity(targetId);
+    }
   }
 
   /// 특정 활동의 좋아요(하트) 상태를 토글합니다.
-  void toggleLike(String id) {
-    state = [
-      for (final act in state)
-        if (act.id == id) act.copyWith(isLiked: !act.isLiked) else act
-    ];
+  Future<void> toggleLike(String id) async {
+    RecommendationActivity? target;
+    final updatedList = state.map((act) {
+      if (act.id == id) {
+        target = act.copyWith(isLiked: !act.isLiked);
+        return target!;
+      }
+      return act;
+    }).toList();
+
+    state = updatedList;
+
+    if (target != null) {
+      await _repo.updateActivityLike(target!);
+    }
   }
 }
 

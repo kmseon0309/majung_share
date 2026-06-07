@@ -9,6 +9,7 @@ import '../../widgets/error_screen.dart';
 import '../../utils/speech_dictionary.dart';
 import '../onboarding/widgets/onboarding_illustration.dart';
 import 'diary_completed_screen.dart';
+import '../../utils/datetime_extension.dart';
 
 /// 일기 생성을 기다리는 로딩 화면.
 /// 피그마 시안 node 175:803 ("AI 대화(로딩)")을 기반으로 구현되었습니다.
@@ -89,7 +90,7 @@ class _DiaryLoadingScreenState extends ConsumerState<DiaryLoadingScreen>
           // 2. 신규 직접 작성 일기 생성 (답장 없이 최초 저장)
           await Future.delayed(const Duration(milliseconds: 1500));
           final newDiary = DiaryData(
-            date: '05.20',
+            date: DateTime.now().toDotString(),
             title: widget.directWriteTitle ?? '',
             content: widget.directWriteContent ?? '',
             mood: widget.directWriteMood ?? 3,
@@ -110,7 +111,7 @@ class _DiaryLoadingScreenState extends ConsumerState<DiaryLoadingScreen>
       } else {
         // 3. 대화 완료 기반 일기 생성
         await ref.read(diaryProvider.notifier).generateDiary(
-              date: '05.20',
+              date: DateTime.now().toDotString(),
               imagePaths: widget.imagePaths,
               userName: userName,
               isHonorific: isHonorific,

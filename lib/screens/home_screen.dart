@@ -13,6 +13,8 @@ import 'activity_collection_screen.dart';
 import 'report/report_list_screen.dart';
 import 'notification_screen.dart';
 import '../widgets/settings_dialog.dart';
+import '../providers/diary_list_provider.dart';
+import '../utils/datetime_extension.dart';
 
 import 'calendar/calendar_screen.dart';
 
@@ -27,11 +29,66 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-
-
-
-
   void _navigateToChat() {
+    final diaries = ref.read(diaryListProvider);
+    final todayStr = DateTime.now().toDotString();
+    final todayDiaries = diaries
+        .where((d) => d.date.startsWith(todayStr))
+        .toList();
+
+    if (todayDiaries.length >= 3) {
+      showDialog(
+        context: context,
+        builder: (context) => Dialog(
+          backgroundColor: AppColors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  '일기는 하루에\n최대 3개까지만 저장할 수 있어요.',
+                  style: AppTextStyle.body2B,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  '오늘의 일기 중 하나를 삭제해 주세요.',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyle.caption1,
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 40,
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: TextButton.styleFrom(
+                      backgroundColor: AppColors.mainColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    child: Text(
+                      '확인',
+                      style: AppTextStyle.caption1Bold.copyWith(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const ChatScreen()),
@@ -47,11 +104,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 좋아요가 등록된 첫 번째 활동 확인 (없을 시 '활동 모음 보러가기' 문구 노출)
+    // 가장 최근에 추천된 활동 확인 (없을 시 '활동 모음 보러가기' 문구 노출)
     final activities = ref.watch(activityListProvider);
-    final likedActivities = activities.where((a) => a.isLiked).toList();
-    final cardTitle = likedActivities.isNotEmpty
-        ? likedActivities.first.title
+    final cardTitle = activities.isNotEmpty
+        ? activities.first.title
         : '활동 모음 보러가기';
 
     return Scaffold(
@@ -89,29 +145,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
         actions: [
           IconButton(
-            icon: SvgPicture.asset(
-              AppIcons.bell,
-              width: 24,
-              height: 24,
-            ),
+            icon: SvgPicture.asset(AppIcons.bell, width: 24, height: 24),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const NotificationScreen()),
+                MaterialPageRoute(
+                  builder: (context) => const NotificationScreen(),
+                ),
               );
             },
           ),
           IconButton(
-            icon: SvgPicture.asset(
-              AppIcons.setting,
-              width: 24,
-              height: 24,
-            ),
+            icon: SvgPicture.asset(AppIcons.setting, width: 24, height: 24),
             onPressed: () {
               final parentContext = context;
               showDialog(
                 context: parentContext,
-                builder: (dialogContext) => SettingsDialog(parentContext: parentContext),
+                builder: (dialogContext) =>
+                    SettingsDialog(parentContext: parentContext),
               );
             },
           ),
@@ -187,7 +238,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           return false; // 항상 false를 반환하여 선택 및 커브가 움직이지 않게 고정
         },
       ),
-
     );
   }
 }
@@ -208,11 +258,7 @@ class _HomeTabBuilder extends DelegateBuilder {
   Widget build(BuildContext context, int index, bool active) {
     if (index == 0) {
       return Center(
-        child: SvgPicture.asset(
-          AppIcons.calender,
-          width: 32,
-          height: 32,
-        ),
+        child: SvgPicture.asset(AppIcons.calender, width: 32, height: 32),
       );
     } else if (index == 1) {
       return Center(
@@ -224,21 +270,13 @@ class _HomeTabBuilder extends DelegateBuilder {
             color: AppColors.mainColor,
           ),
           child: Center(
-            child: SvgPicture.asset(
-              AppIcons.message,
-              width: 36,
-              height: 36,
-            ),
+            child: SvgPicture.asset(AppIcons.message, width: 36, height: 36),
           ),
         ),
       );
     } else {
       return Center(
-        child: SvgPicture.asset(
-          AppIcons.envelope,
-          width: 28,
-          height: 28,
-        ),
+        child: SvgPicture.asset(AppIcons.envelope, width: 28, height: 28),
       );
     }
   }

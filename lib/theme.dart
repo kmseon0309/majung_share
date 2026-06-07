@@ -123,4 +123,14 @@ class AppTextStyle {
     height: 1.5,
     color: AppColors.grayScale9,
   );
+
+  // Poppins 전용 서체 계열
+  static const String poppinsFontFamily = 'Poppins';
+
+  static const TextStyle poppinsBody = TextStyle(
+    fontFamily: poppinsFontFamily,
+    fontSize: 16,
+    fontWeight: FontWeight.w400,
+    color: AppColors.black,
+  );
 }

@@ -13,6 +13,9 @@ import 'widgets/diary_mood_selector_row.dart';
 import 'widgets/diary_title_input_field.dart';
 import 'widgets/diary_editable_image_scroll_list.dart';
 import 'widgets/diary_content_input_field.dart';
+import '../../utils/datetime_extension.dart';
+import '../../utils/form_validation_helper.dart';
+import '../../widgets/confirm_dialog.dart';
 
 /// 일기 편집 및 작성 전용 화면.
 /// 기분 5단계 선택, 포커스 시에만 나타나는 타이틀 밑줄, 테두리 없는 본문 입력창,
@@ -32,6 +35,8 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
   late int _selectedMood;
   late List<String> _imagePaths;
   final ImagePicker _picker = ImagePicker();
+
+  late final FormValidationHelper _formHelper;
 
   @override
   void initState() {
@@ -53,14 +58,22 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
       _selectedMood = 3; // 기본 보통 기분
       _imagePaths = [];
     }
+
+    _formHelper = FormValidationHelper(
+      controllers: [_titleController, _contentController],
+      onChanged: () => setState(() {}),
+    );
   }
 
   @override
   void dispose() {
+    _formHelper.dispose();
     _titleController.dispose();
     _contentController.dispose();
     super.dispose();
   }
+
+  bool get _isButtonEnabled => _formHelper.isValid;
 
   /// 이미지 첨부 경로 선택 바텀 시트 호출
   void _showImagePickerSourceSheet() {
@@ -95,13 +108,12 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '이미지를 가져오는 중 오류가 발생했습니다: $e',
-              style: AppTextStyle.caption1.copyWith(color: AppColors.white),
-            ),
-            backgroundColor: AppColors.red,
+        showDialog(
+          context: context,
+          builder: (context) => ConfirmDialog(
+            title: '이미지를 가져오는 중 오류가 발생했습니다: $e',
+            cancelLabel: '', // 1버튼 모드로 작동
+            onConfirm: () {},
           ),
         );
       }
@@ -113,21 +125,8 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
     final newTitle = _titleController.text.trim();
     final newContent = _contentController.text.trim();
 
-    if (newTitle.isEmpty || newContent.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '제목과 내용을 입력해 주세요.',
-            style: AppTextStyle.caption1.copyWith(color: AppColors.white),
-          ),
-          backgroundColor: AppColors.red,
-        ),
-      );
-      return;
-    }
-
     final newDiary = DiaryData(
-      date: widget.initialDiary?.date ?? '05.20',
+      date: widget.initialDiary?.date ?? DateTime.now().toDotString(),
       title: newTitle,
       content: newContent,
       mood: _selectedMood,
@@ -152,16 +151,6 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
       ref.read(diaryProvider.notifier).saveNewDiary(newDiary);
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          widget.initialDiary != null ? '일기가 수정되었습니다.' : '일기가 저장되었습니다.',
-          style: AppTextStyle.caption1.copyWith(color: AppColors.white),
-        ),
-        backgroundColor: AppColors.mainColor,
-      ),
-    );
-
     Navigator.pop(context);
   }
 
@@ -180,7 +169,7 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          '${widget.initialDiary?.date ?? '05.20'}(수정 중)',
+          '${(widget.initialDiary?.date ?? DateTime.now().toDotString()).toMMDD()}(수정 중)',
           style: AppTextStyle.body2B,
         ),
         centerTitle: true,
@@ -190,8 +179,12 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
               AppIcons.checkCircle,
               width: 24,
               height: 24,
+              colorFilter: ColorFilter.mode(
+                _isButtonEnabled ? AppColors.mainColor : AppColors.gray3,
+                BlendMode.srcIn,
+              ),
             ),
-            onPressed: _saveDiaryEdit,
+            onPressed: _isButtonEnabled ? _saveDiaryEdit : null,
           ),
           const SizedBox(width: 8),
         ],

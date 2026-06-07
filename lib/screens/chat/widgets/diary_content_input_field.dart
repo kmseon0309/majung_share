@@ -26,7 +26,7 @@ class DiaryContentInputField extends StatelessWidget {
         ),
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: const TextStyle(color: AppColors.gray4),
+          hintStyle: AppTextStyle.caption1.copyWith(color: AppColors.gray4),
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,

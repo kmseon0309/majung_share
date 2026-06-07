@@ -11,6 +11,7 @@ import '../../providers/diary_provider.dart';
 import '../../widgets/error_screen.dart';
 import 'widgets/chat_inner_button.dart';
 import 'diary_edit_screen.dart';
+import '../../utils/datetime_extension.dart';
 import '../../utils/speech_dictionary.dart';
 import '../../main.dart'; // selectedStyleProvider
 import 'diary_loading_screen.dart';
@@ -75,15 +76,6 @@ class _DiaryCompletedScreenState extends ConsumerState<DiaryCompletedScreen> {
           title: SpeechDictionary.get(SpeechKey.deleteConfirmTitle, isHonorific),
           onConfirm: () {
             ref.read(diaryProvider.notifier).deleteDiary();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  '일기가 삭제되었습니다.',
-                  style: AppTextStyle.caption1.copyWith(color: AppColors.white),
-                ),
-                backgroundColor: AppColors.mainColor,
-              ),
-            );
             // 1. 다이얼로그 닫기
             Navigator.pop(dialogContext);
             // 2. 진입 경로에 따라 적절히 이전 화면 또는 홈 화면으로 이동
@@ -118,7 +110,7 @@ class _DiaryCompletedScreenState extends ConsumerState<DiaryCompletedScreen> {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: CustomAppBar(
-        title: diary.date,
+        title: diary.date.toMMDD(),
         titleStyle: AppTextStyle.body2B,
         onBackPressed: () {
           // 일기 완수 후 뒤로가기 탭 시 진입 경로에 따라 복귀 처리
@@ -307,9 +299,7 @@ class _DiaryCompletedScreenState extends ConsumerState<DiaryCompletedScreen> {
                                         );
                                   },
                                   onSkip: () {
-                                    ref.read(diaryProvider.notifier).updateDiary(
-                                          recommendedAction: '오늘 한 일 1개 적기',
-                                        );
+                                    // 건너뛰기 선택 시 아무런 행동도 임의 지정하지 않고 빈 상태를 유지하여 추후 상세 화면에서 재추천/선택할 수 있게 함
                                   },
                                 );
                               },

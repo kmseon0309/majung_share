@@ -22,6 +22,34 @@ class DiaryData {
     this.tags = const [],
   });
 
+  factory DiaryData.fromJson(Map<String, dynamic> json) {
+    return DiaryData(
+      date: json['date'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      content: json['content'] as String? ?? '',
+      mood: json['mood'] as int? ?? 3,
+      imagePaths: (json['imagePaths'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const [],
+      mascotFeedback: json['mascotFeedback'] as String? ?? '',
+      recommendedAction: json['recommendedAction'] as String? ?? '',
+      isDirectWrite: json['isDirectWrite'] as bool? ?? false,
+      tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'date': date,
+      'title': title,
+      'content': content,
+      'mood': mood,
+      'imagePaths': imagePaths,
+      'mascotFeedback': mascotFeedback,
+      'recommendedAction': recommendedAction,
+      'isDirectWrite': isDirectWrite,
+      'tags': tags,
+    };
+  }
+
   DiaryData copyWith({
     String? date,
     String? title,

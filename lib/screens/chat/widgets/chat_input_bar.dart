@@ -61,9 +61,9 @@ class ChatInputBar extends StatelessWidget {
                 controller: controller,
                 style: AppTextStyle.body2R,
                 onSubmitted: (_) => onSend(),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: '메시지를 입력하세요...',
-                  hintStyle: TextStyle(color: AppColors.gray4),
+                  hintStyle: AppTextStyle.caption1.copyWith(color: AppColors.gray4),
                   border: InputBorder.none,
                   isDense: true,
                   contentPadding: EdgeInsets.zero,

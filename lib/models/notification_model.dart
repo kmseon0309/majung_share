@@ -12,6 +12,24 @@ class NotificationItem {
     required this.isUnread,
   });
 
+  factory NotificationItem.fromJson(Map<String, dynamic> json) {
+    return NotificationItem(
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      date: json['date'] as String? ?? '',
+      isUnread: json['isUnread'] as bool? ?? true,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'date': date,
+      'isUnread': isUnread,
+    };
+  }
+
   NotificationItem copyWith({
     String? id,
     String? title,

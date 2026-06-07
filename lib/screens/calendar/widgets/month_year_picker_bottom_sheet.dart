@@ -110,9 +110,8 @@ class _MonthYearPickerBottomSheetState extends State<MonthYearPickerBottomSheet>
                           return Center(
                             child: Text(
                               '$year년',
-                              style: const TextStyle(
-                                fontFamily: AppTextStyle.fontFamily,
-                                fontSize: 18,
+                              style: AppTextStyle.body1.copyWith(
+                                fontWeight: FontWeight.w400,
                                 color: AppColors.black,
                               ),
                             ),
@@ -136,9 +135,8 @@ class _MonthYearPickerBottomSheetState extends State<MonthYearPickerBottomSheet>
                           return Center(
                             child: Text(
                               '$m월',
-                              style: const TextStyle(
-                                fontFamily: AppTextStyle.fontFamily,
-                                fontSize: 18,
+                              style: AppTextStyle.body1.copyWith(
+                                fontWeight: FontWeight.w400,
                                 color: AppColors.black,
                               ),
                             ),

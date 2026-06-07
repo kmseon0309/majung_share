@@ -47,19 +47,23 @@ class ConfirmDialog extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: cancelLabel.isEmpty
+                  ? MainAxisAlignment.center
+                  : MainAxisAlignment.spaceEvenly,
               children: [
-                // 취소 버튼
-                CustomButton(
-                  label: cancelLabel,
-                  height: 38,
-                  textColor: cancelTextColor,
-                  backgroundColor: cancelBgColor,
-                  onPressed: () {
-                    Navigator.pop(context);
-                    if (onCancel != null) onCancel!();
-                  },
-                ),
+                if (cancelLabel.isNotEmpty) ...[
+                  // 취소 버튼
+                  CustomButton(
+                    label: cancelLabel,
+                    height: 38,
+                    textColor: cancelTextColor,
+                    backgroundColor: cancelBgColor,
+                    onPressed: () {
+                      Navigator.pop(context);
+                      if (onCancel != null) onCancel!();
+                    },
+                  ),
+                ],
                 // 확인 버튼
                 CustomButton(
                   label: confirmLabel,

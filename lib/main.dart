@@ -3,34 +3,95 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'firebase_options.dart';
+
+import 'providers/user_provider.dart';
+import 'repositories/user_repository.dart';
 
 import 'theme.dart';
 import 'widgets/custom_button.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/home_screen.dart';
 
+// 전역 플래그로 Firebase 사용 여부를 확인 가능하도록 설정
+bool isFirebaseEnabled = false;
 
 // --- Riverpod Providers (전역 공유 상태 관리) ---
 
 // 1. 대화 스타일 세그먼트 상태 공급자 (0: 반말, 1: 높임말)
 class SelectedStyle extends Notifier<int> {
+  UserRepository get _repo => ref.read(userRepositoryProvider);
+
   @override
-  int build() => 0;
-  void select(int val) => state = val;
+  int build() {
+    _init();
+    return 0;
+  }
+
+  Future<void> _init() async {
+    final settings = await _repo.getUserSettings();
+    if (settings != null && settings['selectedStyle'] != null) {
+      state = settings['selectedStyle'] as int;
+    }
+  }
+
+  Future<void> select(int val) async {
+    state = val;
+    await _repo.saveUserSettings(selectedStyle: val);
+  }
 }
 final selectedStyleProvider = NotifierProvider<SelectedStyle, int>(SelectedStyle.new);
 
 // 2. 푸시 알림 설정 토글 상태 공급자
 class ToggleState extends Notifier<bool> {
+  UserRepository get _repo => ref.read(userRepositoryProvider);
+
   @override
-  bool build() => false;
-  void toggle(bool val) => state = val;
+  bool build() {
+    _init();
+    return false;
+  }
+
+  Future<void> _init() async {
+    final settings = await _repo.getUserSettings();
+    if (settings != null && settings['notificationEnabled'] != null) {
+      state = settings['notificationEnabled'] as bool;
+    }
+  }
+
+  Future<void> toggle(bool val) async {
+    state = val;
+    await _repo.saveUserSettings(notificationEnabled: val);
+  }
 }
 final toggleStateProvider = NotifierProvider<ToggleState, bool>(ToggleState.new);
 
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   tz.initializeTimeZones();
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    isFirebaseEnabled = true;
+    debugPrint('Firebase: Successfully initialized');
+
+    // 익명 로그인 수행
+    final auth = FirebaseAuth.instance;
+    if (auth.currentUser == null) {
+      await auth.signInAnonymously();
+      debugPrint('Firebase: Anonymous sign-in success. UID = ${auth.currentUser?.uid}');
+    } else {
+      debugPrint('Firebase: Already signed in. UID = ${auth.currentUser?.uid}');
+    }
+  } catch (e) {
+    debugPrint('Firebase: Initialization failed. Operating in mock mode. Error: $e');
+  }
+
   runApp(
     DevicePreview(
       enabled: !kReleaseMode,

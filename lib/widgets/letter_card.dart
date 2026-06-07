@@ -131,13 +131,11 @@ class _LetterCardState extends State<LetterCard>
                   color: const Color(0xFFFD7E7E), // 피그마 이미지와 일치하는 코랄 색상
                   borderRadius: BorderRadius.circular(100),
                 ),
-                child: const Text(
+                child: Text(
                   'NEW',
-                  style: TextStyle(
-                    fontFamily: AppTextStyle.fontFamily,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800, // 굵은 흰색 글씨
+                  style: AppTextStyle.caption3.copyWith(
                     color: AppColors.white,
+                    fontWeight: FontWeight.w800, // 굵은 흰색 글씨
                     height: 1.1,
                     letterSpacing: 0.3,
                   ),

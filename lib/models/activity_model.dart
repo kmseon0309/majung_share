@@ -10,6 +10,22 @@ class RecommendationActivity {
     this.isLiked = false,
   });
 
+  factory RecommendationActivity.fromJson(Map<String, dynamic> json) {
+    return RecommendationActivity(
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      isLiked: json['isLiked'] as bool? ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'isLiked': isLiked,
+    };
+  }
+
   RecommendationActivity copyWith({
     String? id,
     String? title,

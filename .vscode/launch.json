@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "majung",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "env": {
+        "PATH": "/opt/homebrew/bin:${env:PATH}"
+      }
+    }
+  ]
+}

@@ -19,6 +19,8 @@ import 'diary_loading_screen.dart';
 import 'widgets/direct_write_view.dart';
 import '../../main.dart'; // selectedStyleProvider
 import '../../utils/speech_dictionary.dart';
+import '../../providers/direct_write_provider.dart';
+import '../../utils/datetime_extension.dart';
 
 
 /// 마중이 앱의 핵심 기능인 AI 대화 화면.
@@ -36,12 +38,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final ImagePicker _picker = ImagePicker();
 
-  // 직접 작성용 상태 및 컨트롤러
-  final TextEditingController _directWriteTitleController = TextEditingController();
-  final TextEditingController _directWriteContentController = TextEditingController();
-  int _directWriteMood = 3;
-  final List<String> _directWriteImagePaths = [];
-
   int _toggleIndex = 0; // 0: 대화, 1: 쓰기
   bool _isInputActive = false;
   bool _isMascotTyping = false;
@@ -55,6 +51,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void initState() {
     super.initState();
     _inputController.addListener(_onInputChange);
+
+    // 직접 작성 초기 상태 보장
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(directWriteProvider.notifier).clear();
+      }
+    });
 
     // 최초 마중이 환영 인사 메시지 적재
     _messages.add(
@@ -72,8 +75,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _inputController.removeListener(_onInputChange);
     _inputController.dispose();
     _scrollController.dispose();
-    _directWriteTitleController.dispose();
-    _directWriteContentController.dispose();
     super.dispose();
   }
 
@@ -118,13 +119,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '이미지를 가져오는 중 오류가 발생했습니다: $e',
-              style: AppTextStyle.caption1.copyWith(color: AppColors.white),
-            ),
-            backgroundColor: AppColors.red,
+        showDialog(
+          context: context,
+          builder: (context) => ConfirmDialog(
+            title: '이미지를 가져오는 중 오류가 발생했습니다: $e',
+            cancelLabel: '',
+            onConfirm: () {},
           ),
         );
       }
@@ -381,63 +381,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
-  void _showDirectWriteImagePickerSourceSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext context) {
-        return ImageSourceSheet(
-          onSourceSelected: (source) {
-            Navigator.pop(context);
-            _pickDirectWriteImage(source);
-          },
-        );
-      },
-    );
-  }
-
-  Future<void> _pickDirectWriteImage(ImageSource source) async {
-    try {
-      final XFile? pickedFile = await _picker.pickImage(
-        source: source,
-        maxWidth: 1024,
-        maxHeight: 1024,
-        imageQuality: 85,
-      );
-
-      if (pickedFile != null) {
-        setState(() {
-          _directWriteImagePaths.add(pickedFile.path);
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '이미지를 가져오는 중 오류가 발생했습니다: $e',
-              style: AppTextStyle.caption1.copyWith(color: AppColors.white),
-            ),
-            backgroundColor: AppColors.red,
-          ),
-        );
-      }
-    }
-  }
-
   void _submitDirectWrite() {
-    final title = _directWriteTitleController.text.trim();
-    final content = _directWriteContentController.text.trim();
-
-    if (title.isEmpty || content.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('제목과 내용을 입력해 주세요.'),
-          backgroundColor: AppColors.red,
-        ),
-      );
-      return;
-    }
+    final state = ref.read(directWriteProvider);
+    final title = state.title.trim();
+    final content = state.content.trim();
 
     showDialog(
       context: context,
@@ -453,8 +400,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   isDirectWrite: true,
                   directWriteTitle: title,
                   directWriteContent: content,
-                  directWriteMood: _directWriteMood,
-                  imagePaths: _directWriteImagePaths,
+                  directWriteMood: state.mood,
+                  imagePaths: state.imagePaths,
                 ),
               ),
             );
@@ -474,6 +421,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDirectWriteValid = ref.watch(directWriteProvider.select((s) => s.isValid));
+
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
@@ -489,8 +438,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        // 피그마 문자열 그대로 "05.20"
-        title: const Text('05.20', style: AppTextStyle.body2B),
+        // 오늘 날짜를 MM.dd 형태로 표시
+        title: Text(
+          DateTime.now().toMMDD(),
+          style: AppTextStyle.body2B,
+        ),
         centerTitle: true,
         // 우측 끝내기 버튼 (체크 서클 SVG 아이콘)
         actions: [
@@ -503,8 +455,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   AppIcons.checkCircle,
                   width: 24,
                   height: 24,
+                  colorFilter: ColorFilter.mode(
+                    (_toggleIndex == 0 || isDirectWriteValid)
+                        ? AppColors.mainColor
+                        : AppColors.gray3,
+                    BlendMode.srcIn,
+                  ),
                 ),
-                onPressed: _onFinishPressed,
+                onPressed: (_toggleIndex == 0 || isDirectWriteValid)
+                    ? _onFinishPressed
+                    : null,
               ),
             ),
           ),
@@ -615,21 +575,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               // 직접 작성 영역
               Expanded(
                 child: DirectWriteView(
-                  titleController: _directWriteTitleController,
-                  contentController: _directWriteContentController,
-                  selectedMood: _directWriteMood,
-                  onMoodChanged: (mood) {
-                    setState(() {
-                      _directWriteMood = mood;
-                    });
-                  },
-                  imagePaths: _directWriteImagePaths,
-                  onAddImageTap: _showDirectWriteImagePickerSourceSheet,
-                  onRemoveImage: (index) {
-                    setState(() {
-                      _directWriteImagePaths.removeAt(index);
-                    });
-                  },
                   isHonorific: ref.watch(selectedStyleProvider) == 1,
                 ),
               ),
