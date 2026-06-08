@@ -20,6 +20,27 @@ enum SpeechKey {
 
   /// 활동 모음 서브 헤더 타이틀
   behaviorRecommendationSubHeader,
+
+  /// 일기 하루 3개 제한 안내 메시지
+  dailyLimitAlert,
+
+  /// 서비스 회원 탈퇴 컨펌 타이틀
+  withdrawConfirmTitle,
+
+  /// 활동 추천 섹션 대문 타이틀
+  behaviorRecommendationTitle,
+
+  /// 직접 작성 일기 완성 컨펌 타이틀
+  completeDiaryConfirmTitle,
+
+  /// 주간 리포트 추천 활동 부연 멘트
+  weeklyReportRecommendationFooter,
+
+  /// 주간 리포트 앱바 타이틀 접미사
+  weeklyReportTitleSuffix,
+
+  /// 월간 리포트 앱바 타이틀 접미사
+  monthlyReportTitleSuffix,
 }
 
 /// 말투 설정(존댓말/반말)에 대응하여 고정 텍스트 문구를 일괄 관리하는 사전(Dictionary) 클래스.
@@ -51,6 +72,25 @@ class SpeechDictionary {
       true: '마음에 들었던 행동들에\n하트를 눌러주세요!',
       false: '마음에 들었던 행동들에\n하트를 눌러줘!',
     },
+    SpeechKey.dailyLimitAlert: {
+      true: '일기는 하루에 최대 3개까지만\n저장할 수 있어요.\n오늘의 일기 중 하나를 삭제해 주세요.',
+      false: '일기는 하루에 최대 3개까지만\n저장할 수 있어.\n오늘의 일기 중 하나를 삭제해 줘.',
+    },
+    SpeechKey.withdrawConfirmTitle: {true: '정말 탈퇴하시겠습니까?', false: '정말 탈퇴할래?'},
+    SpeechKey.behaviorRecommendationTitle: {
+      true: '이런 걸 해보시는 건 어떠세요?',
+      false: '이런 걸 해봐!',
+    },
+    SpeechKey.completeDiaryConfirmTitle: {
+      true: '일기를 완성할까요?',
+      false: '일기를 완성할까?',
+    },
+    SpeechKey.weeklyReportRecommendationFooter: {
+      true: '이런 활동들을 하시면 좋을 것 같아요. 다음 주도 화이팅이에요!',
+      false: '이런 활동들을 하면 좋을 거 같아. 다음 주도 화이팅이야!',
+    },
+    SpeechKey.weeklyReportTitleSuffix: {true: '는 어땠을까요?', false: '는 어땠을까?'},
+    SpeechKey.monthlyReportTitleSuffix: {true: '은 어땠을까요?', false: '은 어땠을까?'},
   };
 
   /// 말투 스타일(존댓말 true / 반말 false)과 키를 사용하여 사전에 정의된 고정 멘트를 반환합니다.

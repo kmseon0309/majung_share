@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../theme.dart';
 import '../../../widgets/custom_button.dart';
+import '../../../main.dart'; // selectedStyleProvider
 import 'activity_card.dart';
 
 /// 피그마의 `활동 추천 모달` 다이얼로그 컴포넌트.
-class ActivityRecommendationDialog extends StatefulWidget {
+class ActivityRecommendationDialog extends ConsumerStatefulWidget {
   final ValueChanged<String> onActivitySelected;
   final VoidCallback onSkip;
 
@@ -15,12 +17,12 @@ class ActivityRecommendationDialog extends StatefulWidget {
   });
 
   @override
-  State<ActivityRecommendationDialog> createState() =>
+  ConsumerState<ActivityRecommendationDialog> createState() =>
       _ActivityRecommendationDialogState();
 }
 
 class _ActivityRecommendationDialogState
-    extends State<ActivityRecommendationDialog> {
+    extends ConsumerState<ActivityRecommendationDialog> {
   int _selectedActivityIndex = -1;
   final List<String> _activities = [
     '좋아하는 노래 들으며 산책하기',

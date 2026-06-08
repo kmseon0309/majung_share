@@ -8,6 +8,7 @@ import '../../providers/report_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../main.dart'; // selectedStyleProvider
 import '../../widgets/custom_app_bar.dart';
+import '../../utils/speech_dictionary.dart';
 
 /// 피그마 주간 리포트(node 27:121) 및 월간 리포트(node 30:403) 상세 정보를
 /// 유연하게 통합 처리하는 고충실도(High-Fidelity) 리포트 상세 화면입니다.
@@ -62,11 +63,12 @@ class ReportDetailScreen extends ConsumerWidget {
       formattedTitle = formattedTitle.replaceAll('주', ' 주');
     }
 
+    final suffix = report.isWeekly
+        ? SpeechDictionary.get(SpeechKey.weeklyReportTitleSuffix, isHonorific)
+        : SpeechDictionary.get(SpeechKey.monthlyReportTitleSuffix, isHonorific);
     final String appBarTitle = report.isWeekly
-        ? (isHonorific ? '$formattedTitle는 어땠을까요?' : '$formattedTitle는 어땠을까?')
-        : (isHonorific
-              ? '${formattedTitle.replaceAll('의 기록', '')}은 어땠을까요?'
-              : '${formattedTitle.replaceAll('의 기록', '')}은 어땠을까?');
+        ? '$formattedTitle$suffix'
+        : '${formattedTitle.replaceAll('의 기록', '')}$suffix';
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -180,9 +182,7 @@ class ReportDetailScreen extends ConsumerWidget {
                         const SizedBox(height: 16),
                         // 피그마 v.4 추천 카드 하단 부연 멘트
                         Text(
-                          isHonorific
-                              ? '이런 활동들을 하시면 좋을 것 같아요. 다음 주도 화이팅이에요!'
-                              : '이런 활동들을 하면 좋을 거 같아. 다음 주도 화이팅이야!',
+                          SpeechDictionary.get(SpeechKey.weeklyReportRecommendationFooter, isHonorific),
                           style: AppTextStyle.body2R.copyWith(
                             color: AppColors.grayScale9,
                             height: 1.4,

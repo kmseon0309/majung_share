@@ -15,6 +15,9 @@ import 'notification_screen.dart';
 import '../widgets/settings_dialog.dart';
 import '../providers/diary_list_provider.dart';
 import '../utils/datetime_extension.dart';
+import '../widgets/confirm_dialog.dart';
+import '../main.dart';
+import '../utils/speech_dictionary.dart';
 
 import 'calendar/calendar_screen.dart';
 
@@ -37,53 +40,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         .toList();
 
     if (todayDiaries.length >= 3) {
+      final isHonorific = ref.read(selectedStyleProvider) == 1;
       showDialog(
         context: context,
-        builder: (context) => Dialog(
-          backgroundColor: AppColors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  '일기는 하루에\n최대 3개까지만 저장할 수 있어요.',
-                  style: AppTextStyle.body2B,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  '오늘의 일기 중 하나를 삭제해 주세요.',
-                  textAlign: TextAlign.center,
-                  style: AppTextStyle.caption1,
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 40,
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: TextButton.styleFrom(
-                      backgroundColor: AppColors.mainColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    child: Text(
-                      '확인',
-                      style: AppTextStyle.caption1Bold.copyWith(
-                        color: AppColors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+        builder: (context) => ConfirmDialog(
+          title: SpeechDictionary.get(SpeechKey.dailyLimitAlert, isHonorific),
+          cancelLabel: '',
+          confirmLabel: '확인',
+          onConfirm: () {},
         ),
       );
       return;

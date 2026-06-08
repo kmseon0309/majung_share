@@ -385,12 +385,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final state = ref.read(directWriteProvider);
     final title = state.title.trim();
     final content = state.content.trim();
+    final isHonorific = ref.read(selectedStyleProvider) == 1;
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return ConfirmDialog(
-          title: '일기를 완성할까?',
+          title: SpeechDictionary.get(SpeechKey.completeDiaryConfirmTitle, isHonorific),
           onConfirm: () {
             Navigator.pop(context); // Close the dialog
             Navigator.push(

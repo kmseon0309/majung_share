@@ -94,6 +94,7 @@ class _DiaryCompletedScreenState extends ConsumerState<DiaryCompletedScreen> {
   Widget build(BuildContext context) {
     final diary = ref.watch(diaryProvider);
     final userName = ref.watch(userNameProvider);
+    final isHonorific = ref.watch(selectedStyleProvider) == 1;
 
     // 일기 데이터가 없는 경우 (삭제되었거나 미생성) 안전하게 전역 에러 화면 표출
     if (diary == null) {
@@ -167,7 +168,7 @@ class _DiaryCompletedScreenState extends ConsumerState<DiaryCompletedScreen> {
               // 2. 일기 제목 렌더링
               Center(
                 child: Text(
-                  diary.title,
+                   diary.title,
                   style: AppTextStyle.body1.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppColors.grayScale9,
@@ -252,7 +253,7 @@ class _DiaryCompletedScreenState extends ConsumerState<DiaryCompletedScreen> {
                     if (!diary.isDirectWrite || diary.mascotFeedback.isNotEmpty) ...[
                       const SizedBox(height: 28),
                       Text(
-                        '이런 걸 해봐!',
+                        SpeechDictionary.get(SpeechKey.behaviorRecommendationTitle, isHonorific),
                         style: AppTextStyle.body2R.copyWith(
                           color: AppColors.grayScale9,
                           fontWeight: FontWeight.w500,

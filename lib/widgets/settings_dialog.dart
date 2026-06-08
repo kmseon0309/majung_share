@@ -8,6 +8,7 @@ import 'style_segmented_slider.dart';
 import 'confirm_dialog.dart';
 import '../providers/user_provider.dart';
 import '../main.dart'; // selectedStyleProvider, toggleStateProvider
+import '../utils/speech_dictionary.dart';
 
 /// 피그마 "설정 모달" 디자인(node 173:514)을 100% 반영한 고충실도 설정 다이얼로그.
 /// 가로 300px, 세로 353px의 흰색 카드 형태로 화면 중앙에 팝업됩니다.
@@ -214,7 +215,10 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
                   context: widget.parentContext,
                   barrierDismissible: false,
                   builder: (dialogContext) => ConfirmDialog(
-                    title: '정말 탈퇴 하시겠습니까?',
+                    title: SpeechDictionary.get(
+                      SpeechKey.withdrawConfirmTitle,
+                      ref.read(selectedStyleProvider) == 1,
+                    ),
                     confirmLabel: '탈퇴',
                     cancelLabel: '취소',
                     confirmBgColor: AppColors.red,
