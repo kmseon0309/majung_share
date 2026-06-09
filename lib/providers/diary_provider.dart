@@ -16,6 +16,7 @@ class DiaryNotifier extends Notifier<DiaryData?> {
     required String userName,
     required bool isHonorific,
     String? selectedActivity,
+    List<String> recommendedActions = const [],
   }) async {
     // 1. 실제 네트워크 및 DNS 쿼리 동작을 모방하기 위해 lookup 수행.
     try {
@@ -50,13 +51,14 @@ class DiaryNotifier extends Notifier<DiaryData?> {
       imagePaths: imagePaths,
       mascotFeedback: feedback,
       recommendedAction: selectedActivity ?? '',
+      recommendedActions: recommendedActions,
     );
 
     state = newDiary;
     await ref.read(diaryListProvider.notifier).addOrUpdateDiary(newDiary);
 
     if (selectedActivity != null && selectedActivity.isNotEmpty) {
-      await ref.read(activityListProvider.notifier).addActivity(selectedActivity);
+      await ref.read(activityListProvider.notifier).addActivity(selectedActivity, date: finalDateKey);
     }
   }
 
@@ -67,6 +69,7 @@ class DiaryNotifier extends Notifier<DiaryData?> {
     int? mood,
     List<String>? imagePaths,
     String? recommendedAction,
+    List<String>? recommendedActions,
   }) async {
     if (state != null) {
       final updated = state!.copyWith(
@@ -75,12 +78,13 @@ class DiaryNotifier extends Notifier<DiaryData?> {
         mood: mood,
         imagePaths: imagePaths,
         recommendedAction: recommendedAction,
+        recommendedActions: recommendedActions,
       );
       state = updated;
       await ref.read(diaryListProvider.notifier).addOrUpdateDiary(updated);
 
       if (recommendedAction != null && recommendedAction.isNotEmpty) {
-        await ref.read(activityListProvider.notifier).addActivity(recommendedAction);
+        await ref.read(activityListProvider.notifier).addActivity(recommendedAction, date: updated.date);
       }
     }
   }
@@ -107,7 +111,7 @@ class DiaryNotifier extends Notifier<DiaryData?> {
     await ref.read(diaryListProvider.notifier).addOrUpdateDiary(newDiary);
 
     if (newDiary.recommendedAction.isNotEmpty) {
-      await ref.read(activityListProvider.notifier).addActivity(newDiary.recommendedAction);
+      await ref.read(activityListProvider.notifier).addActivity(newDiary.recommendedAction, date: finalDateKey);
     }
   }
 

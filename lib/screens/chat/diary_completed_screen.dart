@@ -294,6 +294,13 @@ class _DiaryCompletedScreenState extends ConsumerState<DiaryCompletedScreen> {
                               context: context,
                               builder: (BuildContext context) {
                                 return ActivityRecommendationDialog(
+                                  activities: diary.recommendedActions.isNotEmpty
+                                      ? diary.recommendedActions
+                                      : const [
+                                          '좋아하는 노래 들으며 산책하기',
+                                          '따뜻한 물로 샤워하기',
+                                          '따뜻한 차 한 잔 마시기',
+                                        ],
                                   onActivitySelected: (activityLabel) {
                                     ref.read(diaryProvider.notifier).updateDiary(
                                           recommendedAction: activityLabel,

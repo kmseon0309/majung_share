@@ -8,8 +8,10 @@ import '../widgets/like_filter_button.dart';
 import '../providers/activity_recommendation_provider.dart';
 import '../main.dart'; // selectedStyleProvider
 import '../utils/speech_dictionary.dart';
-
 import '../widgets/custom_app_bar.dart';
+import '../providers/diary_provider.dart';
+import '../providers/diary_list_provider.dart';
+import 'chat/diary_completed_screen.dart';
 
 /// 피그마 "행동 추천" 시안(node 100:1179)의 레이아웃을 반영한 활동 모음 화면.
 /// 사용자는 추천받은 활동 목록을 보고 좋아요(하트)를 눌러 북마크할 수 있으며, 
@@ -105,10 +107,24 @@ class ActivityCollectionScreen extends ConsumerWidget {
                             child: BehaviorCard(
                               title: act.title,
                               isLiked: act.isLiked,
+                              selectedDates: act.selectedDates,
                               onLikeToggle: () {
                                 ref
                                     .read(activityListProvider.notifier)
                                     .toggleLike(act.id);
+                              },
+                              onDateTap: (rawDate) {
+                                final diaries = ref.read(diaryListProvider);
+                                final matches = diaries.where((d) => d.date == rawDate).toList();
+                                if (matches.isNotEmpty) {
+                                  ref.read(diaryProvider.notifier).setSelectedDiary(matches.first);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const DiaryCompletedScreen(),
+                                    ),
+                                  );
+                                }
                               },
                             ),
                           );

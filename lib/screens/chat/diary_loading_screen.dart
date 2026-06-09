@@ -16,6 +16,7 @@ import '../../utils/datetime_extension.dart';
 class DiaryLoadingScreen extends ConsumerStatefulWidget {
   final List<String> imagePaths;
   final String? selectedActivity;
+  final List<String> recommendedActions;
   final bool isDirectWrite;
   final String? directWriteTitle;
   final String? directWriteContent;
@@ -26,6 +27,7 @@ class DiaryLoadingScreen extends ConsumerStatefulWidget {
     super.key,
     this.imagePaths = const [],
     this.selectedActivity,
+    this.recommendedActions = const [],
     this.isDirectWrite = false,
     this.directWriteTitle,
     this.directWriteContent,
@@ -116,6 +118,7 @@ class _DiaryLoadingScreenState extends ConsumerState<DiaryLoadingScreen>
               userName: userName,
               isHonorific: isHonorific,
               selectedActivity: widget.selectedActivity,
+              recommendedActions: widget.recommendedActions,
             );
 
         if (!mounted) return;

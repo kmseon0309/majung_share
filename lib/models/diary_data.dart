@@ -7,6 +7,7 @@ class DiaryData {
   final List<String> imagePaths;
   final String mascotFeedback;
   final String recommendedAction;
+  final List<String> recommendedActions;
   final bool isDirectWrite;
   final List<String> tags;
 
@@ -18,6 +19,7 @@ class DiaryData {
     required this.imagePaths,
     required this.mascotFeedback,
     required this.recommendedAction,
+    this.recommendedActions = const [],
     this.isDirectWrite = false,
     this.tags = const [],
   });
@@ -31,6 +33,7 @@ class DiaryData {
       imagePaths: (json['imagePaths'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const [],
       mascotFeedback: json['mascotFeedback'] as String? ?? '',
       recommendedAction: json['recommendedAction'] as String? ?? '',
+      recommendedActions: (json['recommendedActions'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const [],
       isDirectWrite: json['isDirectWrite'] as bool? ?? false,
       tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const [],
     );
@@ -45,6 +48,7 @@ class DiaryData {
       'imagePaths': imagePaths,
       'mascotFeedback': mascotFeedback,
       'recommendedAction': recommendedAction,
+      'recommendedActions': recommendedActions,
       'isDirectWrite': isDirectWrite,
       'tags': tags,
     };
@@ -58,6 +62,7 @@ class DiaryData {
     List<String>? imagePaths,
     String? mascotFeedback,
     String? recommendedAction,
+    List<String>? recommendedActions,
     bool? isDirectWrite,
     List<String>? tags,
   }) {
@@ -69,6 +74,7 @@ class DiaryData {
       imagePaths: imagePaths ?? this.imagePaths,
       mascotFeedback: mascotFeedback ?? this.mascotFeedback,
       recommendedAction: recommendedAction ?? this.recommendedAction,
+      recommendedActions: recommendedActions ?? this.recommendedActions,
       isDirectWrite: isDirectWrite ?? this.isDirectWrite,
       tags: tags ?? this.tags,
     );

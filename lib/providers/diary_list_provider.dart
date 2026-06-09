@@ -56,12 +56,9 @@ class DiaryListNotifier extends Notifier<List<DiaryData>> {
         state = state.where((d) => d.date != date).toList();
       }
 
-      // 연쇄 활동 삭제 검증: 지워진 일기의 추천 활동을 다른 일기들이 쓰지 않고 있으면 활동 모음에서도 제거
+      // 연쇄 활동 날짜 이력 제거
       if (actionTitle.isNotEmpty) {
-        final otherMatches = state.where((d) => d.date != date && d.recommendedAction == actionTitle);
-        if (otherMatches.isEmpty) {
-          await ref.read(activityListProvider.notifier).removeActivityByTitle(actionTitle);
-        }
+        await ref.read(activityListProvider.notifier).removeActivityDate(actionTitle, date);
       }
     }
   }

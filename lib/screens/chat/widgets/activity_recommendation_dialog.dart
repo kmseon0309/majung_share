@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../theme.dart';
 import '../../../widgets/custom_button.dart';
-import '../../../main.dart'; // selectedStyleProvider
 import 'activity_card.dart';
 
 /// 피그마의 `활동 추천 모달` 다이얼로그 컴포넌트.
 class ActivityRecommendationDialog extends ConsumerStatefulWidget {
+  final List<String> activities;
   final ValueChanged<String> onActivitySelected;
   final VoidCallback onSkip;
 
   const ActivityRecommendationDialog({
     super.key,
+    required this.activities,
     required this.onActivitySelected,
     required this.onSkip,
   });
@@ -24,11 +25,6 @@ class ActivityRecommendationDialog extends ConsumerStatefulWidget {
 class _ActivityRecommendationDialogState
     extends ConsumerState<ActivityRecommendationDialog> {
   int _selectedActivityIndex = -1;
-  final List<String> _activities = [
-    '좋아하는 노래 들으며 산책하기',
-    '따뜻한 물로 샤워하기',
-    '따뜻한 차 한 잔 마시기',
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -49,11 +45,11 @@ class _ActivityRecommendationDialogState
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
-                  children: List.generate(_activities.length, (index) {
+                  children: List.generate(widget.activities.length, (index) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       child: ActivityCard(
-                        label: _activities[index],
+                        label: widget.activities[index],
                         isSelected: _selectedActivityIndex == index,
                         onTap: () {
                           setState(() {
@@ -78,7 +74,7 @@ class _ActivityRecommendationDialogState
                     : () {
                         Navigator.pop(context);
                         widget.onActivitySelected(
-                          _activities[_selectedActivityIndex],
+                          widget.activities[_selectedActivityIndex],
                         );
                       },
                 backgroundColor: _selectedActivityIndex == -1

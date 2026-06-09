@@ -81,29 +81,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         elevation: 0,
         automaticallyImplyLeading: false,
         // 피그마 상단 탑바 레이아웃 (x: 16, y: 10, width: 76, height: 36)
-        leadingWidth: 92,
+        leadingWidth: 116,
         leading: Padding(
-          padding: const EdgeInsets.only(left: 16, top: 10, bottom: 10),
+          padding: const EdgeInsets.only(left: 16, top: 6, bottom: 6),
           child: GestureDetector(
             onTap: () {
               // 임시 코드: 개발자 런처(MainHomeScreen)로 되돌아가기
               Navigator.pop(context);
             },
-            child: Container(
-              width: 76,
-              height: 36,
-              decoration: BoxDecoration(
-                color: AppColors.gray2,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                '마중',
-                style: AppTextStyle.caption2.copyWith(
-                  color: AppColors.grayScale9,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            child: Image.asset(
+              'assets/images/main_logo.png',
+              width: 100,
+              height: 44,
+              fit: BoxFit.contain,
             ),
           ),
         ),

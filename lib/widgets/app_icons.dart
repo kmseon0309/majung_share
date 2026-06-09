@@ -12,6 +12,9 @@ class AppIcons {
   /// 활동 이동 화살표 (오른쪽 화살표 ->)
   static const String arrowRight = '${_basePath}arrow_right.svg';
 
+  /// 행동 추천 카드 작은 오른쪽/아래쪽 화살표
+  static const String rightArrowSmall = '${_basePath}right_arrow_small.svg';
+
   /// 알림 (벨)
   static const String bell = '${_basePath}bell.svg';
 

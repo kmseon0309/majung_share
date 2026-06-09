@@ -135,6 +135,8 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
           widget.initialDiary?.mascotFeedback ?? '스스로 직접 작성하신 소중한 일기입니다.',
       recommendedAction:
           widget.initialDiary?.recommendedAction ?? '',
+      recommendedActions:
+          widget.initialDiary?.recommendedActions ?? const [],
       isDirectWrite: widget.initialDiary?.isDirectWrite ?? false,
     );
 

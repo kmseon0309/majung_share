@@ -43,6 +43,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   bool _isMascotTyping = false;
   String? _selectedImagePath; // 미리보기용 이미지 대기 상태
   String? _selectedActivity; // 사용자 추천 선택 활동
+  final List<String> _recommendedActions = const [
+    '좋아하는 노래 들으며 산책하기',
+    '따뜻한 물로 샤워하기',
+    '따뜻한 차 한 잔 마시기',
+  ];
 
   // 모크 응답 순서 제어용 시퀀스 인덱스
   int _mockSequenceIndex = 0;
@@ -274,6 +279,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       context: context,
       builder: (BuildContext context) {
         return ActivityRecommendationDialog(
+          activities: _recommendedActions,
           onActivitySelected: _selectActivity,
           onSkip: _skipActivityRecommendation,
         );
@@ -376,6 +382,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         builder: (context) => DiaryLoadingScreen(
           imagePaths: imagePaths,
           selectedActivity: _selectedActivity,
+          recommendedActions: _recommendedActions,
         ),
       ),
     );
