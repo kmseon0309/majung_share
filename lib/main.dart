@@ -5,6 +5,7 @@ import 'package:device_preview/device_preview.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'firebase_options.dart';
 
 import 'providers/user_provider.dart';
@@ -79,6 +80,13 @@ Future<void> main() async {
     );
     isFirebaseEnabled = true;
     debugPrint('Firebase: Successfully initialized');
+
+    // 로컬 에뮬레이터 설정 (Mac AirPlay Receiver의 5001 포트 충돌 방지를 위해 5002 포트 사용)
+    if (kDebugMode) {
+      final host = defaultTargetPlatform == TargetPlatform.android ? '10.0.2.2' : 'localhost';
+      FirebaseFunctions.instance.useFunctionsEmulator(host, 5002);
+      debugPrint('FirebaseFunctions: Using local emulator at $host:5002');
+    }
 
     // 익명 로그인 수행
     final auth = FirebaseAuth.instance;

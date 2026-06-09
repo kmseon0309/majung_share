@@ -65,8 +65,8 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
         scale: _scaleAnimation,
         child: Container(
           width: 228,
-          height: 80,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          constraints: const BoxConstraints(minHeight: 80),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             color: backgroundColor,
             border: border,
@@ -79,8 +79,6 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
               (match) => '${match[1]}\u200D',
             ),
             textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
             style: textStyle.copyWith(
               height: 1.5, // 피그마 leading-[1.5]
             ),

@@ -21,6 +21,9 @@ import '../../main.dart'; // selectedStyleProvider
 import '../../utils/speech_dictionary.dart';
 import '../../providers/direct_write_provider.dart';
 import '../../utils/datetime_extension.dart';
+import '../../utils/calendar_service.dart';
+import '../../providers/user_provider.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 
 /// 마중이 앱의 핵심 기능인 AI 대화 화면.
@@ -43,14 +46,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   bool _isMascotTyping = false;
   String? _selectedImagePath; // 미리보기용 이미지 대기 상태
   String? _selectedActivity; // 사용자 추천 선택 활동
-  final List<String> _recommendedActions = const [
+  final List<String> _recommendedActions = [
     '좋아하는 노래 들으며 산책하기',
     '따뜻한 물로 샤워하기',
     '따뜻한 차 한 잔 마시기',
   ];
-
-  // 모크 응답 순서 제어용 시퀀스 인덱스
-  int _mockSequenceIndex = 0;
 
   @override
   void initState() {
@@ -152,8 +152,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
-  /// 사용자 메시지 전송 처리 (텍스트 및 이미지 동시/개별 전송 대응)
-  void _sendMessage() {
+  /// 사용자 메시지 전송 처리 (실시간 AI 대화 연동)
+  Future<void> _sendMessage() async {
     final text = _inputController.text.trim();
     final imagePath = _selectedImagePath;
 
@@ -161,110 +161,94 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     _inputController.clear();
 
+    final userMsg = ChatMessage(
+      id: 'u_${DateTime.now().millisecondsSinceEpoch}',
+      sender: MessageSender.user,
+      content: text,
+      timestamp: DateTime.now(),
+      imagePath: imagePath,
+    );
+
     setState(() {
       _selectedImagePath = null;
       _isInputActive = false;
-      _messages.add(
-        ChatMessage(
-          id: 'u_${DateTime.now().millisecondsSinceEpoch}',
-          sender: MessageSender.user,
-          content: text,
-          timestamp: DateTime.now(),
-          imagePath: imagePath,
-        ),
-      );
+      _messages.add(userMsg);
       _isMascotTyping = true;
     });
 
     _scrollToBottom();
 
-    // 마중이의 AI 응답 딜레이 시뮬레이션
-    Timer(const Duration(milliseconds: 1500), () {
+    try {
+      final userName = ref.read(userNameProvider);
+      final isHonorific = ref.read(selectedStyleProvider) == 1;
+
+      // 캘린더 일정 연동
+      final todayEvents = await CalendarService.getTodayEvents();
+
+      // AI API Call via Cloud Functions
+      final List<Map<String, dynamic>> serializedMessages = _messages.map((m) => {
+        'sender': m.sender == MessageSender.user ? 'user' : 'mascot',
+        'content': m.content,
+      }).toList();
+
+      final callable = FirebaseFunctions.instance.httpsCallable('chatWithMascot');
+      final response = await callable.call({
+        'messages': serializedMessages,
+        'userName': userName,
+        'isHonorific': isHonorific,
+        'todayEvents': todayEvents,
+      });
+
+      final resultData = Map<String, dynamic>.from(response.data as Map);
+      final reply = resultData['reply'] as String? ?? '오늘 하루도 힘내자.';
+      final shouldRecommend = resultData['shouldRecommendActions'] as bool? ?? false;
+      final List<dynamic>? recommendedList = resultData['recommendedActions'] as List<dynamic>?;
+
       if (!mounted) return;
+
       setState(() {
         _isMascotTyping = false;
-      });
-
-      if (imagePath != null) {
-        // 이미지가 포함된 업로드의 경우 공감 모크 피드백
-        setState(() {
-          _messages.add(
-            ChatMessage(
-              id: 'm_${DateTime.now().millisecondsSinceEpoch}',
-              sender: MessageSender.mascot,
-              content: '우와, 정말 예쁜 사진이네! 무슨 일이었는지 나한테도 더 이야기해줄래?',
-              timestamp: DateTime.now(),
-            ),
-          );
-        });
-      } else {
-        // 일반 텍스트 전송 시 기존 피그마 시퀀스 전개
-        _triggerMascotResponse();
-      }
-      _scrollToBottom();
-    });
-  }
-
-  /// 마중이 모크 응답 시나리오 시퀀스
-  void _triggerMascotResponse() {
-    if (!mounted) return;
-
-    final now = DateTime.now();
-
-    if (_mockSequenceIndex == 0) {
-      // 1단계 마중이 응답
-      setState(() {
+        
+        // 마중이 응답 추가
         _messages.add(
           ChatMessage(
-            id: 'm_${now.millisecondsSinceEpoch}',
+            id: 'm_${DateTime.now().millisecondsSinceEpoch}',
             sender: MessageSender.mascot,
-            content: '그러면 요즘 하루가 버겁겠다..',
-            timestamp: now,
+            content: reply,
+            timestamp: DateTime.now(),
           ),
         );
-        _mockSequenceIndex = 1;
-      });
-    } else if (_mockSequenceIndex == 1) {
-      // 2단계 마중이 응답 + 활동 추천 카드 순차 노출
-      setState(() {
-        _messages.add(
-          ChatMessage(
-            id: 'm_${now.millisecondsSinceEpoch}_1',
-            sender: MessageSender.mascot,
-            content: '하루 전체를 실패로 정리하기엔\n네가 버틴 시간도 분명히 있었을 거야',
-            timestamp: now,
-          ),
-        );
-      });
 
-      _scrollToBottom();
+        // 활동 추천 노출 타이밍인 경우
+        if (shouldRecommend && recommendedList != null && recommendedList.isNotEmpty) {
+          final List<String> acts = recommendedList.map((e) => e as String).toList();
+          
+          _recommendedActions.clear();
+          _recommendedActions.addAll(acts);
 
-      // 카드는 800ms 뒤에 한 템포 늦게 노출하여 시각적 리듬감 부여
-      Timer(const Duration(milliseconds: 800), () {
-        if (!mounted) return;
-        setState(() {
           _messages.add(
             ChatMessage(
-              id: 'm_${now.millisecondsSinceEpoch}_2',
+              id: 'm_${DateTime.now().millisecondsSinceEpoch}_recommend',
               sender: MessageSender.mascot,
               content: '이런 행동은 어때?\n기분이 바뀔지도 몰라',
-              timestamp: now,
+              timestamp: DateTime.now(),
               type: MessageType.activityRecommendation,
             ),
           );
-          _mockSequenceIndex = 2;
-        });
-        _scrollToBottom();
+        }
       });
-    } else {
-      // 그 외 일반 응답 처리
+    } catch (e) {
+      debugPrint('Cloud Functions chatWithMascot error: $e');
+      if (!mounted) return;
       setState(() {
+        _isMascotTyping = false;
+        // 에러 발생 시 폴백 응답 추가
         _messages.add(
           ChatMessage(
-            id: 'm_${now.millisecondsSinceEpoch}',
+            id: 'm_${DateTime.now().millisecondsSinceEpoch}_error',
             sender: MessageSender.mascot,
-            content: '오늘 이야기를 나누며 하루를 남기는 용기를 내 줘서 고마워.\n내일은 너무 완벽하지 않아도 괜찮아.',
-            timestamp: now,
+            content: '이야기를 들려줘서 고마워. 마음 깊이 공감하고 있어.',
+            timestamp: DateTime.now(),
           ),
         );
       });
@@ -383,6 +367,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           imagePaths: imagePaths,
           selectedActivity: _selectedActivity,
           recommendedActions: _recommendedActions,
+          chatMessages: _messages,
         ),
       ),
     );

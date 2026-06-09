@@ -5,8 +5,10 @@ import '../../main.dart'; // selectedStyleProvider
 import '../../providers/user_provider.dart';
 import '../../providers/diary_provider.dart';
 import '../../models/diary_data.dart';
+import '../../models/chat_message.dart';
 import '../../widgets/error_screen.dart';
 import '../../utils/speech_dictionary.dart';
+import '../../utils/calendar_service.dart';
 import '../onboarding/widgets/onboarding_illustration.dart';
 import 'diary_completed_screen.dart';
 import '../../utils/datetime_extension.dart';
@@ -22,6 +24,7 @@ class DiaryLoadingScreen extends ConsumerStatefulWidget {
   final String? directWriteContent;
   final int? directWriteMood;
   final bool isReplyOnly;
+  final List<ChatMessage> chatMessages;
 
   const DiaryLoadingScreen({
     super.key,
@@ -33,6 +36,7 @@ class DiaryLoadingScreen extends ConsumerStatefulWidget {
     this.directWriteContent,
     this.directWriteMood,
     this.isReplyOnly = false,
+    this.chatMessages = const [],
   });
 
   @override
@@ -79,12 +83,16 @@ class _DiaryLoadingScreenState extends ConsumerState<DiaryLoadingScreen>
       final userName = ref.read(userNameProvider);
       final isHonorific = ref.read(selectedStyleProvider) == 1;
 
+      // 캘린더 일정 연동
+      final todayEvents = await CalendarService.getTodayEvents();
+
       if (widget.isDirectWrite) {
         if (widget.isReplyOnly) {
           // 1. 기존 직접 작성 일기에 마중이 답장만 생성
           await ref.read(diaryProvider.notifier).generateMascotFeedbackOnly(
                 userName: userName,
                 isHonorific: isHonorific,
+                todayEvents: todayEvents,
               );
           if (!mounted) return;
           Navigator.pop(context);
@@ -119,6 +127,8 @@ class _DiaryLoadingScreenState extends ConsumerState<DiaryLoadingScreen>
               isHonorific: isHonorific,
               selectedActivity: widget.selectedActivity,
               recommendedActions: widget.recommendedActions,
+              chatMessages: widget.chatMessages,
+              todayEvents: todayEvents,
             );
 
         if (!mounted) return;

@@ -263,7 +263,7 @@ class _DiaryCompletedScreenState extends ConsumerState<DiaryCompletedScreen> {
                       if (diary.recommendedAction.isNotEmpty)
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
                           decoration: BoxDecoration(
                             color: AppColors.white,
                             borderRadius: BorderRadius.circular(8),
@@ -278,6 +278,7 @@ class _DiaryCompletedScreenState extends ConsumerState<DiaryCompletedScreen> {
                           child: Center(
                             child: Text(
                               diary.recommendedAction,
+                              textAlign: TextAlign.center,
                               style: AppTextStyle.body2B.copyWith(
                                 color: AppColors.mainColor,
                               ),
