@@ -44,8 +44,11 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+functions/node_modules/
+
 # Firebase & Secrets
 *service-account*.json
 *firebase-admin*.json
 .env
 .env.local
+lib/secrets.dart

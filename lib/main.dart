@@ -10,6 +10,7 @@ import 'firebase_options.dart';
 
 import 'providers/user_provider.dart';
 import 'repositories/user_repository.dart';
+import 'services/fcm_service.dart';
 
 import 'theme.dart';
 import 'widgets/custom_button.dart';
@@ -18,6 +19,9 @@ import 'screens/home_screen.dart';
 
 // 전역 플래그로 Firebase 사용 여부를 확인 가능하도록 설정
 bool isFirebaseEnabled = false;
+
+// Cloud Functions 배포 완료 후 true로 변경 (Blaze 플랜 업그레이드 + firebase deploy --only functions 이후)
+bool isCloudFunctionsEnabled = false;
 
 // --- Riverpod Providers (전역 공유 상태 관리) ---
 
@@ -95,6 +99,12 @@ Future<void> main() async {
       debugPrint('Firebase: Anonymous sign-in success. UID = ${auth.currentUser?.uid}');
     } else {
       debugPrint('Firebase: Already signed in. UID = ${auth.currentUser?.uid}');
+    }
+
+    // FCM 서비스 초기화 및 토큰 동기화
+    final uid = auth.currentUser?.uid;
+    if (uid != null) {
+      await FcmService.initialize(uid: uid);
     }
   } catch (e) {
     debugPrint('Firebase: Initialization failed. Operating in mock mode. Error: $e');

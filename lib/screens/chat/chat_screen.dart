@@ -23,7 +23,7 @@ import '../../providers/direct_write_provider.dart';
 import '../../utils/datetime_extension.dart';
 import '../../utils/calendar_service.dart';
 import '../../providers/user_provider.dart';
-import 'package:cloud_functions/cloud_functions.dart';
+import '../../services/gemini_service.dart';
 
 
 /// 마중이 앱의 핵심 기능인 AI 대화 화면.
@@ -185,21 +185,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       // 캘린더 일정 연동
       final todayEvents = await CalendarService.getTodayEvents();
 
-      // AI API Call via Cloud Functions
       final List<Map<String, dynamic>> serializedMessages = _messages.map((m) => {
         'sender': m.sender == MessageSender.user ? 'user' : 'mascot',
         'content': m.content,
       }).toList();
 
-      final callable = FirebaseFunctions.instance.httpsCallable('chatWithMascot');
-      final response = await callable.call({
-        'messages': serializedMessages,
-        'userName': userName,
-        'isHonorific': isHonorific,
-        'todayEvents': todayEvents,
-      });
-
-      final resultData = Map<String, dynamic>.from(response.data as Map);
+      final resultData = await GeminiService.chatWithMascot(
+        messages: serializedMessages,
+        userName: userName,
+        isHonorific: isHonorific,
+        todayEvents: todayEvents,
+      );
       final reply = resultData['reply'] as String? ?? '오늘 하루도 힘내자.';
       final shouldRecommend = resultData['shouldRecommendActions'] as bool? ?? false;
       final List<dynamic>? recommendedList = resultData['recommendedActions'] as List<dynamic>?;
@@ -238,16 +234,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         }
       });
     } catch (e) {
-      debugPrint('Cloud Functions chatWithMascot error: $e');
+      debugPrint('chatWithMascot error: $e');
       if (!mounted) return;
       setState(() {
         _isMascotTyping = false;
-        // 에러 발생 시 폴백 응답 추가
         _messages.add(
           ChatMessage(
             id: 'm_${DateTime.now().millisecondsSinceEpoch}_error',
             sender: MessageSender.mascot,
-            content: '이야기를 들려줘서 고마워. 마음 깊이 공감하고 있어.',
+            content: '[AI 오류] $e',
             timestamp: DateTime.now(),
           ),
         );

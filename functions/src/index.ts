@@ -1,6 +1,11 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import { onSchedule } from "firebase-functions/v2/scheduler";
+import { defineSecret } from "firebase-functions/params";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import * as admin from "firebase-admin";
+
+const geminiApiKey = defineSecret("GEMINI_API_KEY");
 
 admin.initializeApp();
 
@@ -38,7 +43,7 @@ interface ChatMessage {
  * 1. 실시간 대화 API (chatWithMascot)
  * 유저의 입력에 실시간으로 따뜻하게 응답하고, 필요시 행동 추천 목록을 동적으로 반환합니다.
  */
-export const chatWithMascot = onCall({ maxInstances: 10 }, async (request) => {
+export const chatWithMascot = onCall({ maxInstances: 10, secrets: [geminiApiKey] }, async (request) => {
   const { messages, userName, isHonorific, todayEvents } = request.data as {
     messages: ChatMessage[];
     userName: string;
@@ -52,7 +57,7 @@ export const chatWithMascot = onCall({ maxInstances: 10 }, async (request) => {
 
   const genAI = getGeminiClient();
   const model = genAI.getGenerativeModel({
-    model: "gemini-3.5-flash",
+    model: "gemini-2.0-flash",
     generationConfig: {
       responseMimeType: "application/json",
     },
@@ -101,7 +106,7 @@ ${conversationHistory}
  * 2. 일기 및 피드백 생성 API (generateDiaryAndFeedback)
  * 대화 마무리 시점에 감정, 일기 내용, 피드백을 한 번에 생성하거나, 직접 작성 시 피드백과 추천 행동을 생성합니다.
  */
-export const generateDiaryAndFeedback = onCall({ maxInstances: 10 }, async (request) => {
+export const generateDiaryAndFeedback = onCall({ maxInstances: 10, secrets: [geminiApiKey] }, async (request) => {
   const {
     messages,
     userName,
@@ -122,7 +127,7 @@ export const generateDiaryAndFeedback = onCall({ maxInstances: 10 }, async (requ
 
   const genAI = getGeminiClient();
   const model = genAI.getGenerativeModel({
-    model: "gemini-3.5-flash",
+    model: "gemini-2.0-flash",
     generationConfig: {
       responseMimeType: "application/json",
     },
@@ -207,3 +212,114 @@ ${conversationHistory}
     throw new HttpsError("internal", error.message || "Failed to generate diary and feedback.");
   }
 });
+
+/**
+ * 3. Firestore 트리거: 새 일기 생성 시 마중이 답장 FCM 푸시 알림 발송
+ * 경로: users/{uid}/diaries/{diaryId}
+ */
+export const onDiaryCreated = onDocumentCreated(
+  "users/{uid}/diaries/{diaryId}",
+  async (event) => {
+    const uid = event.params.uid;
+    const data = event.data?.data();
+    if (!data) return;
+
+    // 마중이 피드백이 없는 문서는 알림 생략 (직접 작성 대기 상태 등)
+    const mascotFeedback: string = data.mascotFeedback || "";
+    if (!mascotFeedback) return;
+
+    // 사용자 FCM 토큰 조회
+    const userDoc = await admin.firestore().collection("users").doc(uid).get();
+    const fcmToken: string | undefined = userDoc.data()?.fcmToken;
+    if (!fcmToken) return;
+
+    const title: string = data.title || "오늘의 일기";
+    const notificationBody = mascotFeedback.length > 80
+      ? mascotFeedback.substring(0, 80) + "..."
+      : mascotFeedback;
+
+    // FCM 발송
+    try {
+      await admin.messaging().send({
+        token: fcmToken,
+        notification: {
+          title: "마중이의 답장이 도착했어요",
+          body: notificationBody,
+        },
+        data: {
+          type: "diary_feedback",
+          diaryId: event.params.diaryId,
+        },
+      });
+    } catch (e) {
+      console.error("FCM 발송 실패:", e);
+      return;
+    }
+
+    // Firestore 알림 컬렉션에도 저장 (인앱 알림 목록 표시용)
+    const notifId = Date.now().toString();
+    const today = new Date().toISOString().split("T")[0];
+    await admin.firestore()
+      .collection("users").doc(uid)
+      .collection("notifications").doc(notifId)
+      .set({
+        id: notifId,
+        title: `[마중이 답장] ${title}`,
+        date: today,
+        isUnread: true,
+      });
+  }
+);
+
+/**
+ * 4. 스케줄 함수: 매일 저녁 8시 (KST) 일기 미작성 사용자에게 리마인드 알림
+ * UTC 기준: 11:00 = KST 20:00
+ */
+export const dailyDiaryReminder = onSchedule(
+  { schedule: "0 11 * * *", timeZone: "Asia/Seoul" },
+  async () => {
+    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+
+    // 알림 활성화 사용자 목록 조회
+    const usersSnapshot = await admin.firestore()
+      .collection("users")
+      .where("notificationEnabled", "==", true)
+      .get();
+
+    const promises = usersSnapshot.docs.map(async (userDoc) => {
+      const uid = userDoc.id;
+      const userData = userDoc.data();
+      const fcmToken: string | undefined = userData.fcmToken;
+      const userName: string = userData.name || "사용자";
+
+      if (!fcmToken) return;
+
+      // 오늘 일기 작성 여부 확인
+      const diarySnapshot = await admin.firestore()
+        .collection("users").doc(uid)
+        .collection("diaries")
+        .where("date", ">=", today)
+        .where("date", "<=", today + "￿")
+        .get();
+
+      if (!diarySnapshot.empty) return; // 이미 일기 작성함
+
+      // 리마인드 알림 발송
+      try {
+        await admin.messaging().send({
+          token: fcmToken,
+          notification: {
+            title: `${userName}님, 오늘 하루는 어땠나요?`,
+            body: "마중이가 기다리고 있어요. 오늘의 이야기를 들려주세요.",
+          },
+          data: { type: "daily_reminder" },
+        });
+      } catch (e) {
+        console.error(`FCM 리마인드 발송 실패 (uid: ${uid}):`, e);
+      }
+    });
+
+    await Promise.allSettled(promises);
+    console.log(`dailyDiaryReminder: ${usersSnapshot.size}명 처리 완료`);
+  }
+);

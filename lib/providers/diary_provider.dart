@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_functions/cloud_functions.dart';
+import '../services/gemini_service.dart';
 import '../models/diary_data.dart';
 import '../models/chat_message.dart';
 import 'diary_list_provider.dart';
@@ -43,18 +43,16 @@ class DiaryNotifier extends Notifier<DiaryData?> {
 
     Map<String, dynamic> resultData;
     try {
-      final callable = FirebaseFunctions.instance.httpsCallable('generateDiaryAndFeedback');
-      final response = await callable.call({
-        'messages': serializedMessages,
-        'userName': userName,
-        'isHonorific': isHonorific,
-        'todayEvents': todayEvents,
-        'selectedActivity': selectedActivity,
-        'isDirectWrite': false,
-      });
-      resultData = Map<String, dynamic>.from(response.data as Map);
+      resultData = await GeminiService.generateDiaryAndFeedback(
+        messages: serializedMessages,
+        userName: userName,
+        isHonorific: isHonorific,
+        todayEvents: todayEvents,
+        selectedActivity: selectedActivity,
+        isDirectWrite: false,
+      );
     } catch (e) {
-      debugPrint('Cloud Functions generateDiary error: $e');
+      debugPrint('GeminiService generateDiary error: $e');
       throw Exception('일기 생성 중 오류가 발생했습니다: $e');
     }
 
@@ -155,21 +153,19 @@ class DiaryNotifier extends Notifier<DiaryData?> {
 
     Map<String, dynamic> resultData;
     try {
-      final callable = FirebaseFunctions.instance.httpsCallable('generateDiaryAndFeedback');
-      final response = await callable.call({
-        'userName': userName,
-        'isHonorific': isHonorific,
-        'todayEvents': todayEvents,
-        'isDirectWrite': true,
-        'directWriteData': {
+      resultData = await GeminiService.generateDiaryAndFeedback(
+        userName: userName,
+        isHonorific: isHonorific,
+        todayEvents: todayEvents,
+        isDirectWrite: true,
+        directWriteData: {
           'title': state!.title,
           'content': state!.content,
           'mood': state!.mood,
         },
-      });
-      resultData = Map<String, dynamic>.from(response.data as Map);
+      );
     } catch (e) {
-      debugPrint('Cloud Functions generateMascotFeedbackOnly error: $e');
+      debugPrint('GeminiService generateMascotFeedbackOnly error: $e');
       throw Exception('답장을 생성하는 데 실패했습니다: $e');
     }
 

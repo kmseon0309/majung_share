@@ -26,6 +26,16 @@ class UserRepository extends BaseRepository {
     return null;
   }
 
+  /// Firestore에 FCM 토큰을 저장/업데이트합니다.
+  Future<void> saveFcmToken(String token) async {
+    if (!isEnabled) return;
+    try {
+      await _userDoc?.set({'fcmToken': token}, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('UserRepository: saveFcmToken error: $e');
+    }
+  }
+
   /// Firestore에 사용자 설정 정보를 저장/업데이트합니다.
   Future<void> saveUserSettings({
     String? name,
