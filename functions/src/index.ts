@@ -214,7 +214,49 @@ ${conversationHistory}
 });
 
 /**
- * 3. Firestore 트리거: 새 일기 생성 시 마중이 답장 FCM 푸시 알림 발송
+ * 3. Firestore 트리거: 새 리포트 생성 시 FCM 푸시 알림 발송
+ * 경로: users/{uid}/reports/{reportId}
+ */
+export const onReportCreated = onDocumentCreated(
+  "users/{uid}/reports/{reportId}",
+  async (event) => {
+    const uid = event.params.uid;
+    const data = event.data?.data();
+    if (!data) return;
+
+    const userDoc = await admin.firestore().collection("users").doc(uid).get();
+    const fcmToken: string | undefined = userDoc.data()?.fcmToken;
+    if (!fcmToken) return;
+
+    const isWeekly = data.isWeekly as boolean;
+    const reportTitle = data.title as string || "";
+    const notifTitle = isWeekly ? "주간 리포트가 도착했어요" : "월간 리포트가 도착했어요";
+
+    try {
+      await admin.messaging().send({
+        token: fcmToken,
+        notification: { title: notifTitle, body: reportTitle },
+        data: {
+          type: isWeekly ? "weekly_report" : "monthly_report",
+          reportId: event.params.reportId,
+        },
+      });
+    } catch (e) {
+      console.error("FCM 리포트 알림 발송 실패:", e);
+      return;
+    }
+
+    const notifId = Date.now().toString();
+    const today = new Date().toISOString().split("T")[0];
+    await admin.firestore()
+      .collection("users").doc(uid)
+      .collection("notifications").doc(notifId)
+      .set({ id: notifId, title: notifTitle, date: today, isUnread: true });
+  }
+);
+
+/**
+ * 4. Firestore 트리거: 새 일기 생성 시 마중이 답장 FCM 푸시 알림 발송
  * 경로: users/{uid}/diaries/{diaryId}
  */
 export const onDiaryCreated = onDocumentCreated(
@@ -278,7 +320,9 @@ export const onDiaryCreated = onDocumentCreated(
 export const dailyDiaryReminder = onSchedule(
   { schedule: "0 11 * * *", timeZone: "Asia/Seoul" },
   async () => {
-    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const today = `${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(now.getDate())}`; // YYYY.MM.DD (Firestore date 필드 포맷과 일치)
 
     // 알림 활성화 사용자 목록 조회
     const usersSnapshot = await admin.firestore()
@@ -304,13 +348,22 @@ export const dailyDiaryReminder = onSchedule(
 
       if (!diarySnapshot.empty) return; // 이미 일기 작성함
 
+      // 오늘 캘린더 일정 조회 (클라이언트가 앱 시작 시 동기화한 데이터)
+      const todayEvents = userData.todayEvents as string[] | undefined;
+      const todayEventsDate = userData.todayEventsDate as string | undefined;
+      const hasEvents = Array.isArray(todayEvents) && todayEvents.length > 0 && todayEventsDate === today;
+
+      const notifBody = hasEvents
+        ? `오늘 ${todayEvents![0]} 일정이 있으셨네요. 마중이에게 오늘 이야기를 들려주세요.`
+        : "마중이가 기다리고 있어요. 오늘의 이야기를 들려주세요.";
+
       // 리마인드 알림 발송
       try {
         await admin.messaging().send({
           token: fcmToken,
           notification: {
             title: `${userName}님, 오늘 하루는 어땠나요?`,
-            body: "마중이가 기다리고 있어요. 오늘의 이야기를 들려주세요.",
+            body: notifBody,
           },
           data: { type: "daily_reminder" },
         });

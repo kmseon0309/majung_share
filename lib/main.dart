@@ -11,6 +11,7 @@ import 'firebase_options.dart';
 import 'providers/user_provider.dart';
 import 'repositories/user_repository.dart';
 import 'services/fcm_service.dart';
+import 'utils/calendar_service.dart';
 
 import 'theme.dart';
 import 'widgets/custom_button.dart';
@@ -21,7 +22,7 @@ import 'screens/home_screen.dart';
 bool isFirebaseEnabled = false;
 
 // Cloud Functions 배포 완료 후 true로 변경 (Blaze 플랜 업그레이드 + firebase deploy --only functions 이후)
-bool isCloudFunctionsEnabled = false;
+bool isCloudFunctionsEnabled = true;
 
 // --- Riverpod Providers (전역 공유 상태 관리) ---
 
@@ -105,6 +106,10 @@ Future<void> main() async {
     final uid = auth.currentUser?.uid;
     if (uid != null) {
       await FcmService.initialize(uid: uid);
+
+      // 오늘 캘린더 일정 Firestore 동기화 (Cloud Function 리마인더용)
+      final todayEvents = await CalendarService.getTodayEvents();
+      await FcmService.syncTodayEvents(uid: uid, events: todayEvents);
     }
   } catch (e) {
     debugPrint('Firebase: Initialization failed. Operating in mock mode. Error: $e');

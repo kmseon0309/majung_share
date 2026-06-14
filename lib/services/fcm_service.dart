@@ -71,6 +71,26 @@ class FcmService {
     }
   }
 
+  /// 오늘 기기 캘린더 일정을 Firestore에 동기화 (Cloud Function의 리마인더가 참조)
+  static Future<void> syncTodayEvents({
+    required String uid,
+    required List<String> events,
+  }) async {
+    if (!isFirebaseEnabled) return;
+    final now = DateTime.now();
+    final pad = (int n) => n.toString().padLeft(2, '0');
+    final date = '${now.year}.${pad(now.month)}.${pad(now.day)}';
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .set({'todayEvents': events, 'todayEventsDate': date}, SetOptions(merge: true));
+      debugPrint('FCM: 오늘 일정 동기화 완료 (${events.length}건)');
+    } catch (e) {
+      debugPrint('FCM: 오늘 일정 동기화 실패: $e');
+    }
+  }
+
   // 포그라운드 FCM 메시지를 Firestore 알림 목록에 저장
   static Future<void> _saveNotificationToFirestore(
     String uid,
