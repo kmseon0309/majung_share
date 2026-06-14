@@ -21,7 +21,6 @@ import 'screens/home_screen.dart';
 // 전역 플래그로 Firebase 사용 여부를 확인 가능하도록 설정
 bool isFirebaseEnabled = false;
 
-// Cloud Functions 배포 완료 후 true로 변경 (Blaze 플랜 업그레이드 + firebase deploy --only functions 이후)
 bool isCloudFunctionsEnabled = true;
 
 // --- Riverpod Providers (전역 공유 상태 관리) ---
@@ -107,9 +106,11 @@ Future<void> main() async {
     if (uid != null) {
       await FcmService.initialize(uid: uid);
 
-      // 오늘 캘린더 일정 Firestore 동기화 (Cloud Function 리마인더용)
-      final todayEvents = await CalendarService.getTodayEvents();
-      await FcmService.syncTodayEvents(uid: uid, events: todayEvents);
+      // 오늘 캘린더 일정 Firestore 동기화 (모바일에서만 동작)
+      if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS)) {
+        final todayEvents = await CalendarService.getTodayEvents();
+        await FcmService.syncTodayEvents(uid: uid, events: todayEvents);
+      }
     }
   } catch (e) {
     debugPrint('Firebase: Initialization failed. Operating in mock mode. Error: $e');

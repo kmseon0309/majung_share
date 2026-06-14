@@ -2,7 +2,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { defineSecret } from "firebase-functions/params";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import * as admin from "firebase-admin";
 
 const geminiApiKey = defineSecret("GEMINI_API_KEY");
@@ -10,15 +10,11 @@ const geminiApiKey = defineSecret("GEMINI_API_KEY");
 admin.initializeApp();
 
 // Helper to get Gemini Client
-function getGeminiClient(): GoogleGenerativeAI {
+function getGeminiClient(): GoogleGenAI {
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new HttpsError(
-      "failed-precondition",
-      "GEMINI_API_KEY environment variable is not set."
-    );
-  }
-  return new GoogleGenerativeAI(apiKey);
+  console.log("GEMINI_API_KEY present:", !!apiKey, "prefix:", apiKey?.substring(0, 5));
+  // SDK가 환경변수(GEMINI_API_KEY)를 자동으로 읽음
+  return new GoogleGenAI({});
 }
 
 // System Instruction outlining the Mascot persona & core constraints (no emojis, style match, calendar check)
@@ -28,6 +24,8 @@ const SYSTEM_INSTRUCTION = `
 대화 및 피드백 작성 시 아래 규칙을 반드시 준수하세요:
 1. 어떠한 경우에도 이모티콘(예: 😊, 🌿, 🧺 등)을 절대 사용하지 마세요. 오직 정갈한 한국어 텍스트와 적절한 줄바꿈(\\n)만 사용하여 따뜻한 감정을 전달하세요.
 2. 유저가 선택한 말투에 맞게 100% 존댓말(isHonorific이 true인 경우) 또는 100% 반말(isHonorific이 false인 경우)을 일관되게 사용하세요.
+   - 존댓말(isHonorific=true): 문장 끝을 반드시 ~요, ~습니다, ~세요, ~겠어요 등으로 끝내세요. ~야, ~어, ~잖아, ~자 등 반말 어미 절대 사용 금지.
+   - 반말(isHonorific=false): 문장 끝을 반드시 ~야, ~어, ~잖아, ~자, ~네, ~거야 등으로 끝내세요. ~요, ~습니다, ~세요 등 존댓말 어미 절대 사용 금지.
    - 존댓말 예시: "오늘 하루도 참 고생 많으셨어요. 힘든 일은 털어버리고 푹 쉬시길 바랄게요."
    - 반말 예시: "오늘 하루도 정말 고생 많았어. 힘든 일은 다 털어버리고 푹 쉬자."
 3. 오늘 일정 목록(todayEvents)이 제공되고 비어있지 않다면, 대화 중이나 피드백 중에 해당 일정을 자연스럽게 언급하여 상황 맞춤 공감을 작성해 주세요. (예: "오늘 면접 있으셨던데 보시느라 많이 긴장되셨을 것 같아요." 또는 "오늘 PT 발표하느라 애썼어.")
@@ -55,13 +53,7 @@ export const chatWithMascot = onCall({ maxInstances: 10, secrets: [geminiApiKey]
     throw new HttpsError("invalid-argument", "messages list is required.");
   }
 
-  const genAI = getGeminiClient();
-  const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash",
-    generationConfig: {
-      responseMimeType: "application/json",
-    },
-  });
+  const ai = getGeminiClient();
 
   // Build the conversation transcript
   let conversationHistory = "";
@@ -93,11 +85,17 @@ ${conversationHistory}
 `;
 
   try {
-    const result = await model.generateContent(prompt);
-    const textResponse = result.response.text();
-    const jsonResponse = JSON.parse(textResponse);
+    console.log("Calling Gemini API with model: gemini-3.1-flash-lite");
+    const response = await ai.models.generateContent({
+      model: "gemini-3.1-flash-lite",
+      contents: prompt,
+      config: { responseMimeType: "application/json" },
+    });
+    console.log("Gemini response text:", response.text?.substring(0, 100));
+    const jsonResponse = JSON.parse(response.text ?? "");
     return jsonResponse;
   } catch (error: any) {
+    console.error("chatWithMascot Gemini error:", JSON.stringify(error), error.message);
     throw new HttpsError("internal", error.message || "Failed to generate AI response.");
   }
 });
@@ -125,13 +123,7 @@ export const generateDiaryAndFeedback = onCall({ maxInstances: 10, secrets: [gem
     directWriteData?: { title: string; content: string; mood: number };
   };
 
-  const genAI = getGeminiClient();
-  const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash",
-    generationConfig: {
-      responseMimeType: "application/json",
-    },
-  });
+  const ai = getGeminiClient();
 
   let prompt = "";
 
@@ -189,7 +181,9 @@ ${conversationHistory}
 위 대화 기록을 기반으로 아래 항목들을 생성해 주세요:
 1. 사용자의 하루를 마중이 관점이 아닌, 사용자 1인칭 '나' 시점의 솔직하고 담백한 일기 본문(content)으로 재구성해 주세요. 대화에서 드러난 감정과 에피소드를 자연스러운 일기 형식으로 풀어써야 합니다.
 2. 일기 본문에 잘 어울리는 감성적인 일기 제목(title)을 정해 주세요.
-3. 대화 속 사용자의 감정 상태를 종합 진단하여 감정 단계(mood: 1~5 정수)를 결정해 주세요. (1: 아주 좋음 ~ 5: 아주 나쁨)
+3. 대화 속 사용자의 감정 상태를 종합 진단하여 감정 단계(mood: 1~5 정수)를 결정해 주세요.
+   - mood 기준: 1=아주 좋음(매우 행복/설렘), 2=좋음(긍정적), 3=보통(무난/중립), 4=나쁨(우울/지침/힘듦), 5=아주 나쁨(매우 힘듦/슬픔/절망)
+   - 반드시 대화 내용을 기반으로 실제 감정에 맞는 값을 판단하세요. 기본값 3으로 처리하지 마세요.
 4. 마중이로서 대화를 마무리하며 사용자에게 건네는 따뜻한 답장 피드백(mascotFeedback)을 작성해 주세요. 만약 사용자가 실천하기로 선택한 행동(selectedActivity)이 있다면, 이에 대해 힘을 돋우는 응원의 한마디를 포함해 주세요.
 
 출력은 반드시 아래 스키마를 만족하는 JSON 형태여야 합니다:
@@ -204,9 +198,12 @@ ${conversationHistory}
   }
 
   try {
-    const result = await model.generateContent(prompt);
-    const textResponse = result.response.text();
-    const jsonResponse = JSON.parse(textResponse);
+    const response = await ai.models.generateContent({
+      model: "gemini-3.1-flash-lite",
+      contents: prompt,
+      config: { responseMimeType: "application/json" },
+    });
+    const jsonResponse = JSON.parse(response.text ?? "");
     return jsonResponse;
   } catch (error: any) {
     throw new HttpsError("internal", error.message || "Failed to generate diary and feedback.");

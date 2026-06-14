@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/gemini_service.dart';
@@ -25,13 +24,6 @@ class DiaryNotifier extends Notifier<DiaryData?> {
     List<ChatMessage> chatMessages = const [],
     List<String> todayEvents = const [],
   }) async {
-    // 1. 실제 네트워크 및 DNS 쿼리 동작을 모방하기 위해 lookup 수행.
-    try {
-      await InternetAddress.lookup('images.unsplash.com').timeout(const Duration(seconds: 3));
-    } on SocketException catch (e) {
-      throw Exception('네트워크 연결이 원활하지 않거나 권한이 제한되어 있습니다.\n(상세 에러: $e)');
-    }
-
     final diaries = ref.read(diaryListProvider);
     final finalDateKey = _getAvailableDateKey(date, diaries);
 
@@ -143,13 +135,6 @@ class DiaryNotifier extends Notifier<DiaryData?> {
     List<String> todayEvents = const [],
   }) async {
     if (state == null) return;
-
-    // 1. 네트워크 확인 시뮬레이션
-    try {
-      await InternetAddress.lookup('images.unsplash.com').timeout(const Duration(seconds: 3));
-    } on SocketException catch (e) {
-      throw Exception('네트워크 연결이 원활하지 않거나 권한이 제한되어 있습니다.\n(상세 에러: $e)');
-    }
 
     Map<String, dynamic> resultData;
     try {

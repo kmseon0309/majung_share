@@ -52,3 +52,6 @@ functions/node_modules/
 .env
 .env.local
 lib/secrets.dart
+
+# Playwright test artifacts
+.playwright-mcp/

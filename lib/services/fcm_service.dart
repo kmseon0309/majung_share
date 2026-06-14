@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../main.dart'; // isFirebaseEnabled
+
+// FCM과 캘린더는 모바일(Android/iOS)에서만 지원
+bool get _isMobilePlatform => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
 // 백그라운드 메시지 핸들러는 최상위 함수여야 함 (isolate 제약)
 @pragma('vm:entry-point')
@@ -15,8 +19,8 @@ class FcmService {
   static Future<void> initialize({required String uid}) async {
     if (!isFirebaseEnabled) return;
 
-    // 웹은 VAPID 키 없이 토큰 발급 불가 → 토큰 동기화 생략
-    if (kIsWeb) return;
+    // FCM은 모바일(Android/iOS)에서만 지원
+    if (!_isMobilePlatform) return;
 
     // 백그라운드 핸들러 등록
     FirebaseMessaging.onBackgroundMessage(_onBackgroundMessage);
@@ -76,7 +80,7 @@ class FcmService {
     required String uid,
     required List<String> events,
   }) async {
-    if (!isFirebaseEnabled) return;
+    if (!isFirebaseEnabled || !_isMobilePlatform) return;
     final now = DateTime.now();
     final pad = (int n) => n.toString().padLeft(2, '0');
     final date = '${now.year}.${pad(now.month)}.${pad(now.day)}';

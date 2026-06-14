@@ -1,21 +1,53 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.dailyDiaryReminder = exports.onDiaryCreated = exports.onReportCreated = exports.generateDiaryAndFeedback = exports.chatWithMascot = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const firestore_1 = require("firebase-functions/v2/firestore");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const params_1 = require("firebase-functions/params");
-const generative_ai_1 = require("@google/generative-ai");
-const admin = require("firebase-admin");
+const genai_1 = require("@google/genai");
+const admin = __importStar(require("firebase-admin"));
 const geminiApiKey = (0, params_1.defineSecret)("GEMINI_API_KEY");
 admin.initializeApp();
 // Helper to get Gemini Client
 function getGeminiClient() {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-        throw new https_1.HttpsError("failed-precondition", "GEMINI_API_KEY environment variable is not set.");
-    }
-    return new generative_ai_1.GoogleGenerativeAI(apiKey);
+    console.log("GEMINI_API_KEY present:", !!apiKey, "prefix:", apiKey?.substring(0, 5));
+    // SDK가 환경변수(GEMINI_API_KEY)를 자동으로 읽음
+    return new genai_1.GoogleGenAI({});
 }
 // System Instruction outlining the Mascot persona & core constraints (no emojis, style match, calendar check)
 const SYSTEM_INSTRUCTION = `
@@ -24,6 +56,8 @@ const SYSTEM_INSTRUCTION = `
 대화 및 피드백 작성 시 아래 규칙을 반드시 준수하세요:
 1. 어떠한 경우에도 이모티콘(예: 😊, 🌿, 🧺 등)을 절대 사용하지 마세요. 오직 정갈한 한국어 텍스트와 적절한 줄바꿈(\\n)만 사용하여 따뜻한 감정을 전달하세요.
 2. 유저가 선택한 말투에 맞게 100% 존댓말(isHonorific이 true인 경우) 또는 100% 반말(isHonorific이 false인 경우)을 일관되게 사용하세요.
+   - 존댓말(isHonorific=true): 문장 끝을 반드시 ~요, ~습니다, ~세요, ~겠어요 등으로 끝내세요. ~야, ~어, ~잖아, ~자 등 반말 어미 절대 사용 금지.
+   - 반말(isHonorific=false): 문장 끝을 반드시 ~야, ~어, ~잖아, ~자, ~네, ~거야 등으로 끝내세요. ~요, ~습니다, ~세요 등 존댓말 어미 절대 사용 금지.
    - 존댓말 예시: "오늘 하루도 참 고생 많으셨어요. 힘든 일은 털어버리고 푹 쉬시길 바랄게요."
    - 반말 예시: "오늘 하루도 정말 고생 많았어. 힘든 일은 다 털어버리고 푹 쉬자."
 3. 오늘 일정 목록(todayEvents)이 제공되고 비어있지 않다면, 대화 중이나 피드백 중에 해당 일정을 자연스럽게 언급하여 상황 맞춤 공감을 작성해 주세요. (예: "오늘 면접 있으셨던데 보시느라 많이 긴장되셨을 것 같아요." 또는 "오늘 PT 발표하느라 애썼어.")
@@ -37,13 +71,7 @@ exports.chatWithMascot = (0, https_1.onCall)({ maxInstances: 10, secrets: [gemin
     if (!messages || !Array.isArray(messages)) {
         throw new https_1.HttpsError("invalid-argument", "messages list is required.");
     }
-    const genAI = getGeminiClient();
-    const model = genAI.getGenerativeModel({
-        model: "gemini-2.0-flash",
-        generationConfig: {
-            responseMimeType: "application/json",
-        },
-    });
+    const ai = getGeminiClient();
     // Build the conversation transcript
     let conversationHistory = "";
     for (const msg of messages) {
@@ -72,12 +100,18 @@ ${conversationHistory}
 }
 `;
     try {
-        const result = await model.generateContent(prompt);
-        const textResponse = result.response.text();
-        const jsonResponse = JSON.parse(textResponse);
+        console.log("Calling Gemini API with model: gemini-2.0-flash");
+        const response = await ai.models.generateContent({
+            model: "gemini-3.1-flash-lite",
+            contents: prompt,
+            config: { responseMimeType: "application/json" },
+        });
+        console.log("Gemini response text:", response.text?.substring(0, 100));
+        const jsonResponse = JSON.parse(response.text ?? "");
         return jsonResponse;
     }
     catch (error) {
+        console.error("chatWithMascot Gemini error:", JSON.stringify(error), error.message);
         throw new https_1.HttpsError("internal", error.message || "Failed to generate AI response.");
     }
 });
@@ -87,13 +121,7 @@ ${conversationHistory}
  */
 exports.generateDiaryAndFeedback = (0, https_1.onCall)({ maxInstances: 10, secrets: [geminiApiKey] }, async (request) => {
     const { messages, userName, isHonorific, todayEvents, selectedActivity, isDirectWrite, directWriteData, } = request.data;
-    const genAI = getGeminiClient();
-    const model = genAI.getGenerativeModel({
-        model: "gemini-2.0-flash",
-        generationConfig: {
-            responseMimeType: "application/json",
-        },
-    });
+    const ai = getGeminiClient();
     let prompt = "";
     if (isDirectWrite) {
         if (!directWriteData) {
@@ -149,7 +177,9 @@ ${conversationHistory}
 위 대화 기록을 기반으로 아래 항목들을 생성해 주세요:
 1. 사용자의 하루를 마중이 관점이 아닌, 사용자 1인칭 '나' 시점의 솔직하고 담백한 일기 본문(content)으로 재구성해 주세요. 대화에서 드러난 감정과 에피소드를 자연스러운 일기 형식으로 풀어써야 합니다.
 2. 일기 본문에 잘 어울리는 감성적인 일기 제목(title)을 정해 주세요.
-3. 대화 속 사용자의 감정 상태를 종합 진단하여 감정 단계(mood: 1~5 정수)를 결정해 주세요. (1: 아주 좋음 ~ 5: 아주 나쁨)
+3. 대화 속 사용자의 감정 상태를 종합 진단하여 감정 단계(mood: 1~5 정수)를 결정해 주세요.
+   - mood 기준: 1=아주 좋음(매우 행복/설렘), 2=좋음(긍정적), 3=보통(무난/중립), 4=나쁨(우울/지침/힘듦), 5=아주 나쁨(매우 힘듦/슬픔/절망)
+   - 반드시 대화 내용을 기반으로 실제 감정에 맞는 값을 판단하세요. 기본값 3으로 처리하지 마세요.
 4. 마중이로서 대화를 마무리하며 사용자에게 건네는 따뜻한 답장 피드백(mascotFeedback)을 작성해 주세요. 만약 사용자가 실천하기로 선택한 행동(selectedActivity)이 있다면, 이에 대해 힘을 돋우는 응원의 한마디를 포함해 주세요.
 
 출력은 반드시 아래 스키마를 만족하는 JSON 형태여야 합니다:
@@ -163,9 +193,12 @@ ${conversationHistory}
 `;
     }
     try {
-        const result = await model.generateContent(prompt);
-        const textResponse = result.response.text();
-        const jsonResponse = JSON.parse(textResponse);
+        const response = await ai.models.generateContent({
+            model: "gemini-3.1-flash-lite",
+            contents: prompt,
+            config: { responseMimeType: "application/json" },
+        });
+        const jsonResponse = JSON.parse(response.text ?? "");
         return jsonResponse;
     }
     catch (error) {
