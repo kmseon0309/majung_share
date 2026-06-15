@@ -46,7 +46,7 @@ class _BehaviorCardState extends State<BehaviorCard> {
         onTap: widget.onTap,
         child: Container(
           width: double.infinity,
-          height: 76,
+          constraints: const BoxConstraints(minHeight: 76),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           decoration: BoxDecoration(
             color: AppColors.subColor, // 피그마 bg-[#f4faff]

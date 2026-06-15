@@ -75,6 +75,7 @@ ${conversationHistory}
 
 위 대화 기록을 바탕으로 사용자의 마지막 말에 마중이(대화 참여자)로서 공감하는 다음 한마디 대답(reply)을 생성해 주세요.
 또한, 사용자와 충분한 대화(턴이 2~3회 이상 진행됨)가 이루어졌거나 대화가 잘 마무리되는 느낌이 드는 시점이라고 판단될 경우, 기분 전환을 위한 구체적이고 실천하기 쉬운 행동(활동) 3가지를 함께 추천할 시점인지 결정해 주세요.
+각 추천 행동은 반드시 한 줄(20자 이내)로 간결하게 작성하고, '~하기', '~산책', '~마시기' 같은 명사형으로 마무리하세요.
 
 출력은 반드시 아래 스키마를 만족하는 JSON 형태여야 합니다:
 {
@@ -145,6 +146,7 @@ ${SYSTEM_INSTRUCTION}
 - 내용: ${directWriteData.content}
 
 위 일기 내용(제목, 본문, 감정)을 면밀히 분석하여, 사용자의 감정에 공감하고 조언을 건네는 따뜻한 마중이의 답장(mascotFeedback)과 기분 전환에 도움이 될만한 3가지 추천 행동 목록(recommendedActions)을 생성해 주세요.
+각 추천 행동은 반드시 한 줄(20자 이내)로 간결하게 작성하고, '~하기', '~산책', '~마시기' 같은 명사형으로 마무리하세요.
 
 출력은 반드시 아래 스키마를 만족하는 JSON 형태여야 합니다 (기존 일기 데이터는 그대로 에코하여 포함시킵니다):
 {
@@ -185,6 +187,7 @@ ${conversationHistory}
    - mood 기준: 1=아주 좋음(매우 행복/설렘), 2=좋음(긍정적), 3=보통(무난/중립), 4=나쁨(우울/지침/힘듦), 5=아주 나쁨(매우 힘듦/슬픔/절망)
    - 반드시 대화 내용을 기반으로 실제 감정에 맞는 값을 판단하세요. 기본값 3으로 처리하지 마세요.
 4. 마중이로서 대화를 마무리하며 사용자에게 건네는 따뜻한 답장 피드백(mascotFeedback)을 작성해 주세요. 만약 사용자가 실천하기로 선택한 행동(selectedActivity)이 있다면, 이에 대해 힘을 돋우는 응원의 한마디를 포함해 주세요.
+5. 추천 행동(recommendedActions)은 반드시 한 줄(20자 이내)로 간결하게 작성하고, '~하기', '~산책', '~마시기' 같은 명사형으로 마무리하세요.
 
 출력은 반드시 아래 스키마를 만족하는 JSON 형태여야 합니다:
 {
@@ -332,6 +335,7 @@ export const dailyDiaryReminder = onSchedule(
       const userData = userDoc.data();
       const fcmToken: string | undefined = userData.fcmToken;
       const userName: string = userData.name || "사용자";
+      const isHonorific = (userData.selectedStyle ?? 0) !== 0; // 0=반말, 1=존댓말
 
       if (!fcmToken) return;
 
@@ -350,16 +354,23 @@ export const dailyDiaryReminder = onSchedule(
       const todayEventsDate = userData.todayEventsDate as string | undefined;
       const hasEvents = Array.isArray(todayEvents) && todayEvents.length > 0 && todayEventsDate === today;
 
+      const notifTitle = isHonorific
+        ? `${userName}님, 오늘 하루는 어떠셨어요?`
+        : `${userName}야, 오늘 하루 어땠어?`;
       const notifBody = hasEvents
-        ? `오늘 ${todayEvents![0]} 일정이 있으셨네요. 마중이에게 오늘 이야기를 들려주세요.`
-        : "마중이가 기다리고 있어요. 오늘의 이야기를 들려주세요.";
+        ? (isHonorific
+          ? `오늘 ${todayEvents![0]} 일정이 있으셨네요. 마중이에게 오늘 이야기를 들려주세요.`
+          : `오늘 ${todayEvents![0]} 일정이 있었네. 마중이한테 오늘 이야기 들려줘.`)
+        : (isHonorific
+          ? "마중이가 기다리고 있어요. 오늘의 이야기를 들려주세요."
+          : "마중이가 기다리고 있어. 오늘 이야기 들려줘.");
 
       // 리마인드 알림 발송
       try {
         await admin.messaging().send({
           token: fcmToken,
           notification: {
-            title: `${userName}님, 오늘 하루는 어땠나요?`,
+            title: notifTitle,
             body: notifBody,
           },
           data: { type: "daily_reminder" },

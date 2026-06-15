@@ -102,12 +102,16 @@ class DiaryNotifier extends Notifier<DiaryData?> {
     }
   }
 
-  /// 일기를 삭제하는 비즈니스 로직
+  /// 일기를 삭제하는 비즈니스 로직 (연결된 행동 추천 날짜 이력도 함께 제거)
   Future<void> deleteDiary() async {
     if (state != null) {
       final date = state!.date;
+      final actions = List<String>.from(state!.recommendedActions);
       state = null;
       await ref.read(diaryListProvider.notifier).deleteDiary(date);
+      for (final title in actions) {
+        await ref.read(activityListProvider.notifier).removeActivityDate(title, date);
+      }
     }
   }
 

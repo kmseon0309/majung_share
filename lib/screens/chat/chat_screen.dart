@@ -64,12 +64,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       }
     });
 
-    // 최초 마중이 환영 인사 메시지 적재
+    // 최초 마중이 환영 인사 메시지 적재 (사용자 말투 설정 반영)
+    final isHonorific = ref.read(selectedStyleProvider) == 1;
+    final greeting = isHonorific ? '오늘 하루는 어떠셨어요?' : '오늘 무슨 일 있었어?';
     _messages.add(
       ChatMessage(
         id: 'm_init',
         sender: MessageSender.mascot,
-        content: '오늘 무슨 일 있었어?',
+        content: greeting,
         timestamp: DateTime.now(),
       ),
     );
